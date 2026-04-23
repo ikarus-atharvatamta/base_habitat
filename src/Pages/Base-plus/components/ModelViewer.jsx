@@ -158,7 +158,7 @@ function CameraHandler({
       enablePan={true}
       screenSpacePanning={true}
       minPolarAngle={viewMode === "interior" ? 0.01 : (10 * Math.PI) / 180}
-      maxPolarAngle={viewMode === "interior" ? Math.PI * 0.47 : Math.PI * 0.47}
+      maxPolarAngle={viewMode === "interior" ? Math.PI * 0.5 : Math.PI * 0.5}
       minDistance={distance}
       maxDistance={distance}
       onStart={() => {
@@ -218,24 +218,29 @@ function Model({ url, visible = true, onLoaded }) {
 }
 
 const MODEL_URLS = {
-  base: {
-    light: `${import.meta.env.BASE_URL}plus/models/newmodels/Base_1_Plus_Light.glb`,
-    dark: `${import.meta.env.BASE_URL}plus/models/newmodels/Base_1_Plus_Dark.glb`,
+  base_ext: {
+    light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Light.glb`,
+    dark: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Dark.glb`,
   },
+  base_int: {
+    light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_LightWithoutAO.glb`,
+    dark: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Dark_WithoutAO.glb`,
+  },
+  
   roof: {
-    light: `${import.meta.env.BASE_URL}plus/models/newmodels/Aluminuim Roof.glb`,
-    dark: `${import.meta.env.BASE_URL}plus/models/newmodels/Black Roof.glb`,
+    light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Aluminuim Roof.glb`,
+    dark: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Black Roof.glb`,
   },
   bed: {
-    Mezzanine_king: `${import.meta.env.BASE_URL}plus/models/newmodels/Mezzanine King.glb`,
-    Mezzanine_Bunk: `${import.meta.env.BASE_URL}plus/models/newmodels/Mezzanine Bunk.glb`,
+    Mezzanine_king: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Mezzanine King.glb`,
+    Mezzanine_Bunk: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Mezzanine Bunk.glb`,
   },
-  kitchen: `${import.meta.env.BASE_URL}plus/models/newmodels/Kitchen.glb`,
-  cabinetDoor: `${import.meta.env.BASE_URL}plus/models/newmodels/Kitchen_Stripped_Cover.glb`,
-  deck: `${import.meta.env.BASE_URL}plus/models/newmodels/Base_1_Plus_Deck.glb`,
+  kitchen: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Kitchen.glb`,
+  cabinetDoor: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Kitchen_Stripped_Cover.glb`,
+  deck: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Deck.glb`,
   countertop :{
-      stainless_steel: `${import.meta.env.BASE_URL}plus/models/newmodels/CounterTopSteel.glb`,
-    wood_island: `${import.meta.env.BASE_URL}plus/models/newmodels/CounterTopWood.glb`,
+      stainless_steel: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Counter_Top_Steel.glb`,
+    wood_island: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Counter_Top_Wood.glb`,
   }
 };
 
@@ -253,8 +258,10 @@ const SceneContent = ({
 }) => {
   const { size, camera: threeCamera } = useThree();
 
-  const baseUrl =
-    MODEL_URLS.base[config.selectedColor] || MODEL_URLS.base.light;
+  const baseUrl_ext =
+    MODEL_URLS.base_ext[config.selectedColor] || MODEL_URLS.base_ext.light;
+  const baseUrl_int =
+    MODEL_URLS.base_int[config.selectedColor] || MODEL_URLS.base_int.light;
   const roofUrl =
     MODEL_URLS.roof[config.selectedColor] || MODEL_URLS.roof.light;
   const bedUrl = MODEL_URLS.bed[config.selectedBed] || MODEL_URLS.bed.Mezzanine_king;
@@ -330,7 +337,8 @@ const SceneContent = ({
       {/* <group rotation={[0, Math.PI / 6, 0]}> */}
       <Center key="main-center">
         {/* Base structure — swaps by color */}
-        <Model key={baseUrl} url={baseUrl} onLoaded={handleModelLoaded} />
+        <Model key={baseUrl_ext} url={baseUrl_ext} onLoaded={handleModelLoaded} visible={viewMode === "exterior"} />
+        <Model key={baseUrl_int} url={baseUrl_int} onLoaded={handleModelLoaded} visible={viewMode === "interior"} />
 
         {/* Roof — slides away in interior view, swaps by color */}
         <AnimatedModel
@@ -372,7 +380,7 @@ const SceneContent = ({
       {/* </group> */}
 
       <ContactShadows
-        position={[0, -modelHeight / 2 - 0.01, 0]}
+        position={[0, -modelHeight / 2 - 0.1, 0]}
         opacity={0.45}
         scale={60}
         blur={2.5}
@@ -420,7 +428,9 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
           transition: modelReady ? "opacity 0.75s ease-in" : "none",
         }}
       >
-        <Canvas shadows dpr={[1, 2]} gl={{ logarithmicDepthBuffer: true }}>
+        <Canvas shadows dpr={[1, 2]}
+        //  gl={{ logarithmicDepthBuffer: true }}
+         >
           <PerspectiveCamera
             makeDefault
             ref={cameraRef}
@@ -464,7 +474,8 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
 };
 
 // Preload all models for instant switching
-Object.values(MODEL_URLS.base).forEach((url) => useGLTF.preload(url));
+Object.values(MODEL_URLS.base_ext).forEach((url) => useGLTF.preload(url));
+Object.values(MODEL_URLS.base_int).forEach((url) => useGLTF.preload(url));
 Object.values(MODEL_URLS.roof).forEach((url) => useGLTF.preload(url));
 Object.values(MODEL_URLS.bed).forEach((url) => useGLTF.preload(url));
 useGLTF.preload(MODEL_URLS.kitchen);
