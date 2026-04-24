@@ -394,15 +394,20 @@ const SceneContent = ({
       {/* </group> */}
 
       <ContactShadows
-        position={[0, -modelHeight / 2 - 0.01, 0]}
-        opacity={0.45}
+        position={[0, -modelHeight / 2 -0.16, 0]}
+        opacity={0.35}
         scale={60}
         blur={2.5}
         far={modelHeight * 2 || 10}
         color="#000000"
+        // scale={50}
       />
 
-      <Environment preset="city" />
+      <Environment
+      // preset="city"
+       files={`${import.meta.env.BASE_URL}environment/neutral.hdr`} 
+       />
+
     </Suspense>
   );
 };
@@ -442,26 +447,31 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
           transition: modelReady ? "opacity 0.75s ease-in" : "none",
         }}
       >
-        <Canvas shadows dpr={[1, 2]}
-        //  gl={{ logarithmicDepthBuffer: true, 
-        // gl={{antialias: false }}
+        <Canvas shadows dpr={[1, 2]} 
+        gl={{ 
+          toneMapping: THREE.NoToneMapping, }}
+
         >
+          {/* <Stage> */}
           <PerspectiveCamera
             makeDefault
             ref={cameraRef}
-            fov={17}
+            fov={17}    
             near={.5}
             far={100}
           />
 
-          <ambientLight intensity={0.7} />
-          <directionalLight
+           <ambientLight intensity={0.7} />
+           
+            
+          
+          {/* <directionalLight
             position={[10, 25, 10]}
             intensity={1.2}
             castShadow
             shadow-mapSize={2048}
-          />
-          <pointLight position={[-15, 15, -15]} intensity={0.5} />
+          /> */}
+          {/* <pointLight position={[-15, 15, -15]} intensity={0.5} /> */}
 
           <SceneContent
             viewMode={viewMode}

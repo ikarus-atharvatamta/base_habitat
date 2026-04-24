@@ -388,7 +388,7 @@ const SceneContent = ({
         color="#000000"
       />
 
-      <Environment preset="city" />
+      <Environment files={`${import.meta.env.BASE_URL}environment/neutral.hdr`} />
     </Suspense>
   );
 };
@@ -428,8 +428,7 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
           transition: modelReady ? "opacity 0.75s ease-in" : "none",
         }}
       >
-        <Canvas shadows dpr={[1, 2]}
-        //  gl={{ logarithmicDepthBuffer: true }}
+        <Canvas shadows dpr={[1, 2]} gl={{ toneMapping: THREE.NoToneMapping, toneMappingExposure: 0.7 }}
          >
           <PerspectiveCamera
             makeDefault
@@ -439,14 +438,14 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
             far={100}
           />
 
-          <ambientLight intensity={0.7} />
+          {/* <ambientLight intensity={0.7} />
           <directionalLight
             position={[10, 25, 10]}
             intensity={1.2}
             castShadow
             shadow-mapSize={2048}
           />
-          <pointLight position={[-15, 15, -15]} intensity={0.5} />
+          <pointLight position={[-15, 15, -15]} intensity={0.5} /> */}
 
           <SceneContent
             viewMode={viewMode}
