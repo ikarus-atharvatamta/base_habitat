@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import LayoutSection from "./LayoutSection";
 import ColorSwatchSection from "./ColorSwatchSection";
 import OptionCard from "./OptionCard";
@@ -6,11 +7,12 @@ import OptionCard from "./OptionCard";
 export const TitleSection = ({ className = "" }) => (
   <section className={`flex flex-col gap-6 ${className}`}>
     <h2 className="text-[28px] md:text-[32px] font-normal leading-tight tracking-tight text-charcoal">
-      Design your Cabin
+      Design your Base
     </h2>
     <div className="flex flex-col gap-5">
       <p className="text-[18px] md:text-[20px] text-muted-gray font-normal leading-relaxed">
-        Make it yours. From layout to cladding and other options.
+        Your space, your story. Personalize your Base model
+with our curated design packages and other add-ons.
       </p>
     </div>
   </section>
@@ -19,12 +21,24 @@ export const TitleSection = ({ className = "" }) => (
 const RightPanel = ({
   config = {},
   onColorChange,
+  onSidingChange,
+  onRoofChange,
+  onWindowMaterialChange,
   onBedChange,
   onCabinetChange,
   onLayoutChange,
   onDeckChange,
-  onCounterTopChange
+  onCounterTopChange,
+  onCouchChange,
+  onLightingChange,
+  onWardrobeChange,
+  onCopyConfig
+
 }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isBasePlus = location.pathname === "/basehabitat/plus";
+
   return (
     <div className=" px-10 pt-[36px] pb-12 md:px-[15%] xl:px-[27.5%] md:pt-[80px] md:pb-16 flex flex-col gap-12 w-full mx-auto">
       {/* Title Section (Desktop Only in this panel) */}
@@ -39,25 +53,198 @@ const RightPanel = ({
                 
             /> */}
 
-      {/* Cladding Color */}
+      {/* Choose Base Option */}
       <section className="flex flex-col gap-6">
         <h3 className="select-none text-xl font-normal tracking-tight">
-          Choose your Cladding
+          Choose your Model
         </h3>
         <OptionCard
-          title="Ranger"
-          subtitle="Dark wood, Dark roof and wooden windows"
-          swatchColor="#1c1515"
-          selected={config.selectedColor === "dark"}
-          onClick={() => onColorChange("dark")}
+          title="Base 1"
+          subtitle="Studio - 1 Bed, 1 Bathroom - 940sq. ft"
+          // swatchColor="#1c1515" 
+          selected={!isBasePlus}
+          onClick={() => navigate("/basehabitat")}
         />
         <OptionCard
-          title="Scout"
-          subtitle="Light wood, Lightroof and Aluminium windows"
-          swatchColor="#e7d9d3"
-          selected={config.selectedColor === "light"}
-          onClick={() => onColorChange("light")}
+          title="Base 1+"
+          subtitle="Studio - 1 Bed, 1 Bathroom - 940sq. ft"
+          // swatchColor="#e7d9d3"
+          selected={isBasePlus}
+          onClick={() => navigate("/basehabitat/plus")}
         />
+      </section>
+
+      {/* Exterior Section */}
+      <section className="flex flex-col gap-8">
+        {/* Main Heading */}
+        <div className="border-b border-[#505050] pb-2">
+          <h2 className="select-none text-[28px] md:text-[32px] font-normal leading-tight tracking-tight text-charcoal">
+            Exterior
+          </h2>
+        </div>
+
+        {/* Design Package */}
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <h3 className="select-none text-xl font-normal tracking-tight text-charcoal">
+              Choose your exterior design package
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-8 pt-1">
+            {/* Ranger */}
+            <div 
+              onClick={() => onColorChange("dark")}
+              className="flex flex-col items-start gap-4 cursor-pointer select-none group"
+            >
+              <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
+                <div 
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full border border-black/5 shadow-inner transition-all duration-300 ${
+                    config.sidingColor === "dark" && config.roofColor === "dark"
+                      ? "outline outline-1 outline-offset-[6px] outline-charcoal" 
+                      : "hover:scale-[1.03]"
+                  }`}
+                  style={{
+                    backgroundImage: `url(${import.meta.env.BASE_URL}icons/ranger.webp)`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-full text-left">
+                <h4 className={`text-lg font-normal tracking-tight transition-colors duration-300 ${
+                  config.sidingColor === "dark" && config.roofColor === "dark"
+                    ? "text-charcoal" 
+                    : "text-charcoal/50"
+                }`}>Ranger</h4>
+                <p className={`text-sm leading-normal font-normal transition-colors duration-300 ${
+                  config.sidingColor === "dark" && config.roofColor === "dark"
+                    ? "text-[#4a4a4a]" 
+                    : "text-subtext-gray/70"
+                }`}>
+                  Dark wood siding, dark roof & wood-pvc windows.
+                </p>
+              </div>
+            </div>
+
+            {/* Scout */}
+            <div 
+              onClick={() => onColorChange("light")}
+              className="flex flex-col items-start gap-4 cursor-pointer select-none group"
+            >
+              <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
+                <div 
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full border border-black/5 shadow-inner transition-all duration-300 ${
+                    config.sidingColor === "light" && config.roofColor === "light"
+                      ? "outline outline-1 outline-offset-[6px] outline-charcoal" 
+                      : "hover:scale-[1.03]"
+                  }`}
+                  style={{
+                    backgroundImage: `url(${import.meta.env.BASE_URL}icons/scout.webp)`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-full text-left">
+                <h4 className={`text-lg font-normal tracking-tight transition-colors duration-300 ${
+                  config.sidingColor === "light" && config.roofColor === "light"
+                    ? "text-charcoal" 
+                    : "text-charcoal/50"
+                }`}>Scout</h4>
+                <p className={`text-sm leading-normal font-normal transition-colors duration-300 ${
+                  config.sidingColor === "light" && config.roofColor === "light"
+                    ? "text-[#4a4a4a]" 
+                    : "text-subtext-gray/70"
+                }`}>
+                  Light wood siding, light roof & aluminium windows.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Siding Color Selection */}
+        <div className="flex flex-col gap-4">
+          <h4 className="select-none text-xl font-normal tracking-tight text-charcoal">
+            Choose your siding color
+          </h4>
+          <div className="flex flex-col gap-3">
+            <OptionCard
+              title="Wood - Dark"
+              subtitle='Vertical 6" V-joint - Opaque finish - Brushed spruce'
+              swatchColor="#3c3c3c"
+              swatchRound={true}
+              selected={config.sidingColor === "dark"}
+              onClick={() => onSidingChange("dark")}
+            />
+            <OptionCard
+              title="Wood - Light"
+              subtitle='Vertical 6" V-joint - Lifetime finish - Sanded spruce'
+              swatchColor="#ebe7ca"
+              swatchRound={true}
+              selected={config.sidingColor === "light"}
+              onClick={() => onSidingChange("light")}
+            />
+          </div>
+        </div>
+
+        {/* Roof Color Selection */}
+        <div className="flex flex-col gap-4">
+          <h4 className="select-none text-xl font-normal tracking-tight text-charcoal">
+            Choose your roof color
+          </h4>
+          <div className="flex flex-col gap-3">
+            <OptionCard
+              title="Steel - Light"
+              subtitle='16" panels - Raised joint - Hidden fasteners'
+              swatchColor="#d3d3d3"
+              swatchRound={true}
+              selected={config.roofColor === "light"}
+              onClick={() => onRoofChange("light")}
+            />
+            <OptionCard
+              title="Steel - Dark"
+              subtitle='16" panels - Raised joint - Hidden fasteners'
+              swatchColor="#3c3c3c"
+              swatchRound={true}
+              selected={config.roofColor === "dark"}
+              onClick={() => onRoofChange("dark")}
+            />
+            <OptionCard
+              title="Corrugated - Galvalum"
+              subtitle='1/2" Corrugated steel - Exposed fasteners'
+              swatchColor="linear-gradient(135deg, #d8d8d8 0%, #f0f0f0 100%)"
+              swatchRound={true}
+              selected={config.roofColor === "corrugated-galvalum"}
+              onClick={() => onRoofChange("corrugated-galvalum")}
+            />
+          </div>
+        </div>
+
+        {/* Window Material Selection */}
+        <div className="flex flex-col gap-4">
+          <h4 className="select-none text-xl font-normal tracking-tight text-charcoal">
+            Choose your window material
+          </h4>
+          <div className="flex flex-col gap-3">
+            <OptionCard
+              title="Wood-PVC"
+              subtitle="High-performance, tripled-glazed windows – NZP"
+              swatchColor="#ac936e"
+              swatchRound={true}
+              selected={config.windowMaterial === "wood-pvc"}
+              onClick={() => onWindowMaterialChange("wood-pvc")}
+            />
+            <OptionCard
+              title="Galvanized Aluminium"
+              subtitle="Triple-glazed aluminium windows – Alumilex"
+              swatchColor="#d4d4d4"
+              swatchRound={true}
+              selected={config.windowMaterial === "galvanized-aluminium"}
+              onClick={() => onWindowMaterialChange("galvanized-aluminium")}
+            />
+          </div>
+        </div>
       </section>
 
       {/* <ColorSwatchSection
@@ -80,6 +267,100 @@ const RightPanel = ({
         onChange={onColorChange}
       /> */}
 
+      
+      {/* Interior Section */}
+      <section className="flex flex-col gap-8 bg-[#f7f7f0] p-8 rounded-[32px]">
+        {/* Main Heading */}
+        <div className="border-b border-[#e2e2e2] pb-2">
+          <h2 className="select-none text-[28px] md:text-[32px] font-normal leading-tight tracking-tight text-charcoal">
+            Interior
+          </h2>
+        </div>
+
+        {/* Kitchen Design Package */}
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1.5">
+            <h3 className="select-none text-xl font-normal tracking-tight text-charcoal">
+              Chose your kitchen design package
+            </h3>
+            <p className="text-sm text-subtext-gray select-none leading-normal font-normal">
+              Same quality, two different moods. Both are designed for compact-yet-generous efficiency.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-8 pt-1">
+            {/* Stripped Down */}
+            <div 
+              onClick={() => onCabinetChange("stripped")}
+              className="flex flex-col items-start gap-4 cursor-pointer select-none group"
+            >
+              <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
+                <div 
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full border border-black/5 shadow-inner transition-all duration-300 ${
+                    config.selectedCabinet === "stripped"
+                      ? "outline outline-1 outline-offset-[6px] outline-charcoal" 
+                      : "hover:scale-[1.03]"
+                  }`}
+                  style={{
+                    backgroundImage: `url(${import.meta.env.BASE_URL}icons/stripped.webp)`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-full text-left">
+                <h4 className={`text-lg font-normal tracking-tight transition-colors duration-300 ${
+                  config.selectedCabinet === "stripped"
+                    ? "text-charcoal" 
+                    : "text-charcoal/50"
+                }`}>Stripped Down</h4>
+                <p className={`text-sm leading-normal font-normal transition-colors duration-300 ${
+                  config.selectedCabinet === "stripped"
+                    ? "text-[#4a4a4a]" 
+                    : "text-subtext-gray/70"
+                }`}>
+                  Open cabinets & stainless steel accents.
+                </p>
+              </div>
+            </div>
+
+            {/* Classic */}
+            <div 
+              onClick={() => onCabinetChange("full")}
+              className="flex flex-col items-start gap-4 cursor-pointer select-none group"
+            >
+              <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
+                <div 
+                  className={`w-16 h-16 md:w-20 md:h-20 rounded-full border border-black/5 shadow-inner transition-all duration-300 ${
+                    config.selectedCabinet === "full"
+                      ? "outline outline-1 outline-offset-[6px] outline-charcoal" 
+                      : "hover:scale-[1.03]"
+                  }`}
+                  style={{
+                    backgroundImage: `url(${import.meta.env.BASE_URL}icons/classic.webp)`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center"
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-full text-left">
+                <h4 className={`text-lg font-normal tracking-tight transition-colors duration-300 ${
+                  config.selectedCabinet === "full"
+                    ? "text-charcoal" 
+                    : "text-charcoal/50"
+                }`}>Classic</h4>
+                <p className={`text-sm leading-normal font-normal transition-colors duration-300 ${
+                  config.selectedCabinet === "full"
+                    ? "text-[#4a4a4a]" 
+                    : "text-subtext-gray/70"
+                }`}>
+                  Closed cabinets, tile backsplash and quartz countertop. Complete with a larger wooden island countertop.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Bed Type */}
       <section className="flex flex-col gap-6">
         <h3 className="text-xl font-normal tracking-tight">
@@ -101,27 +382,7 @@ const RightPanel = ({
         </div>
       </section>
 
-      {/* Interior Cabinet Style */}
-      <section className="flex flex-col gap-6">
-        <h3 className="text-xl font-normal tracking-tight">
-          Choose your Interior Cabinet Style
-        </h3>
-        <div className="flex flex-col gap-4">
-          <OptionCard
-            title="Stripped Down"
-            subtitle="Kitchen base only"
-            selected={config.selectedCabinet === "stripped"}
-            onClick={() => onCabinetChange("stripped")}
-          />
-          <OptionCard
-            title="Full"
-            subtitle="Kitchen with cabinet doors"
-            
-            selected={config.selectedCabinet === "full"}
-            onClick={() => onCabinetChange("full")}
-          />
-        </div>
-      </section>
+      
       {/* counter top option */}
       <section className="flex flex-col gap-6">
         <h3 className="text-xl font-normal tracking-tight">
@@ -145,19 +406,108 @@ const RightPanel = ({
       </section>
 
       {/* Additional Options */}
-      <section className="flex flex-col gap-6 mb-12">
-        <h3 className="text-xl font-normal tracking-tight">
-          Choose your Additional Options
-        </h3>
+      <section className="flex flex-col gap-8">
+        {/* Main Heading */}
+        <div className="border-b border-[#505050] pb-2">
+          <h2 className="select-none text-[28px] md:text-[32px] font-normal leading-tight tracking-tight text-charcoal">
+            Exterior Upgrades
+          </h2>
+        </div>
         <div className="flex flex-col gap-4">
           <OptionCard
-            title="Wooden Deck"
-            subtitle="5' x 5'"
+            title="Base Deck"
+            subtitle='1/2" Corugaled steel - Exposed fasteners'
             selected={config.deckSelection===true}
             onClick={()=>onDeckChange(!config.deckSelection)}
           />
         </div>
       </section>
+
+      {/* Add-ons Section */}
+      <section className="flex flex-col gap-6">
+        {/* Main Heading */}
+        <div className="border-b border-[#505050] pb-2">
+          <h2 className="select-none text-[28px] md:text-[32px] font-normal leading-tight tracking-tight text-charcoal">
+            Add-ons
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <OptionCard
+            title="Journey Couch & Stools"
+            subtitle="Designed in collaboration with Mitz Takahashi"
+            selected={config.couchSelection === true}
+            onClick={() => onCouchChange(!config.couchSelection)}
+          />
+          <OptionCard
+            title="Custom Base Lighting"
+            subtitle="Wall sconces and island light – Produced by Hamster Lighting"
+            selected={config.customLighting === true}
+            onClick={() => onLightingChange(!config.customLighting)}
+          />
+          {isBasePlus && (
+            <OptionCard
+              title="Built-in wardrobe (Base 1+ only)"
+              subtitle='16" panels - Raised joint - Hidden fasteners'
+              selected={config.wardrobeSelection === true}
+              onClick={() => onWardrobeChange(!config.wardrobeSelection)}
+            />
+          )}
+        </div>
+      </section>
+
+      {/* Let's make it happen Section */}
+      <section className="flex flex-col gap-8">
+        {/* Main Heading */}
+        <div className="border-b border-[#505050] pb-2">
+          <h2 className="select-none text-[28px] md:text-[32px] font-normal leading-tight tracking-tight text-charcoal">
+            Let's make it happen
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+          {/* Need a break */}
+          <div className="flex flex-col gap-2">
+            <h4 className="text-xl font-normal tracking-tight text-charcoal">
+              Need a break?
+            </h4>
+            <p className="text-sm text-subtext-gray leading-relaxed font-normal">
+              Save your configuration link and come back at any time.
+            </p>
+            <a 
+              href="#" 
+              onClick={(e) => { e.preventDefault(); onCopyConfig(); }}
+              className="text-sm text-charcoal underline hover:text-[#e54d42] font-normal transition-colors"
+            >
+              Copy configuration link
+            </a>
+          </div>
+
+          {/* Have questions */}
+          <div className="flex flex-col gap-2">
+            <h4 className="text-xl font-normal tracking-tight text-charcoal">
+              Have questions?
+            </h4>
+            <p className="text-sm text-subtext-gray leading-relaxed font-normal">
+              Talk to one of our experts to get answers or support.
+            </p>
+            <a 
+              className="text-sm text-charcoal underline hover:text-[#e54d42] font-normal transition-colors"
+            >
+              Talk to us
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Continue Button */}
+      <div className="flex w-full pt-4 pb-12 justify-center">
+        <button 
+          className="w-full md:w-auto px-12 py-3 bg-[#e54d42] text-white rounded-full text-lg font-medium hover:bg-[#d43d32] transition-colors cursor-pointer text-center"
+        >
+          Continue
+        </button>
+      </div>
     </div>
   );
 };

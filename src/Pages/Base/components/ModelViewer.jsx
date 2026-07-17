@@ -224,27 +224,31 @@ function Model({ url, visible = true, onLoaded }) {
 
 const MODEL_URLS = {
   base_ext: {
-    light: `${import.meta.env.BASE_URL}base/models/newmodels23april/Light_Base.glb`,
-    dark: `${import.meta.env.BASE_URL}base/models/newmodels23april/Black_Base.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-17july26/Light_Base.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-17july26/Black_Base.glb`,
   },
   base_int: {
-    dark: `${import.meta.env.BASE_URL}base/models/newmodels23april/Black_BaseWithoutAO.glb`,
-    light: `${import.meta.env.BASE_URL}base/models/newmodels23april/Light_BaseWithoutAO.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-17july26/Black_Base.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-17july26/Light_Base.glb`,
   },
   roof: {
-    light: `${import.meta.env.BASE_URL}base/models/newmodels23april/Light_Roof.glb`,
-    dark: `${import.meta.env.BASE_URL}base/models/newmodels23april/Black_Roof.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-17july26/Light_Roof.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-17july26/Black_Roof.glb`,
   },
   bed: {
-    Mezzanine_king: `${import.meta.env.BASE_URL}base/models/newmodels23april/Mezzanine King.glb`,
-    Mezzanine_Bunk: `${import.meta.env.BASE_URL}base/models/newmodels23april/Mezzanine Bunk.glb`,
+    Mezzanine_king: `${import.meta.env.BASE_URL}base/models/model-17july26/Mezzanine King.glb`,
+    Mezzanine_Bunk: `${import.meta.env.BASE_URL}base/models/model-17july26/Mezzanine Bunk.glb`,
   },
-  kitchen: `${import.meta.env.BASE_URL}base/models/newmodels23april/Kitchen.glb`,
-  cabinetDoor: `${import.meta.env.BASE_URL}base/models/newmodels23april/Kitchen_Cabinet_Door.glb`,
-  deck: `${import.meta.env.BASE_URL}base/models/newmodels23april/Deck.glb`,
+  kitchen: `${import.meta.env.BASE_URL}base/models/model-17july26/Kitchen.glb`,
+  cabinetDoor: `${import.meta.env.BASE_URL}base/models/model-17july26/Kitchen_Cabinet_Door.glb`,
+  deck: `${import.meta.env.BASE_URL}base/models/model-17july26/Deck.glb`,
   countertop: {
-    stainless_steel: `${import.meta.env.BASE_URL}base/models/newmodels23april/CounterTopSteel.glb`,
-    wood_island: `${import.meta.env.BASE_URL}base/models/newmodels23april/CounterTopWood.glb`,
+    stainless_steel: `${import.meta.env.BASE_URL}base/models/model-17july26/CounterTopSteel.glb`,
+    wood_island: `${import.meta.env.BASE_URL}base/models/model-17july26/CounterTopWood.glb`,
+  },
+  window: {
+    "wood-pvc": `${import.meta.env.BASE_URL}base/models/model-17july26/Wood_Window.glb`,
+    "galvanized-aluminium": `${import.meta.env.BASE_URL}base/models/model-17july26/Alumininum_Window.glb`,
   },
 };
 
@@ -264,13 +268,15 @@ const SceneContent = ({
   const { size, camera: threeCamera } = useThree();
 
   const baseUrl_int =
-    MODEL_URLS.base_int[config.selectedColor] || MODEL_URLS.base_int.light;
+    MODEL_URLS.base_int[config.sidingColor] || MODEL_URLS.base_int.light;
   const baseUrl_ext =
-    MODEL_URLS.base_ext[config.selectedColor] || MODEL_URLS.base_ext.light;
+    MODEL_URLS.base_ext[config.sidingColor] || MODEL_URLS.base_ext.light;
+  const baseUrl = viewMode === "interior" ? baseUrl_int : baseUrl_ext;
   const roofUrl =
-    MODEL_URLS.roof[config.selectedColor] || MODEL_URLS.roof.light;
+    MODEL_URLS.roof[config.roofColor] || MODEL_URLS.roof.light;
   const bedUrl = MODEL_URLS.bed[config.selectedBed] || MODEL_URLS.bed.Mezzanine_king;
   const counterTopUrl = MODEL_URLS.countertop[config.selectedCounterTop] || MODEL_URLS.countertop.stainless_steel;
+  const windowUrl = MODEL_URLS.window[config.windowMaterial] || MODEL_URLS.window["wood-pvc"];
   // console.log("[SceneContent] selectedCounterTop =", config.selectedCounterTop, "→ url =", counterTopUrl);
   // Step 1: On model load, measure, cache size, and enable casting shadows on all meshes.
   const handleModelLoaded = useMemo(
@@ -343,16 +349,13 @@ const SceneContent = ({
     <Suspense fallback={null}>
       {/* <group rotation={[0, Math.PI / 6, 0]}> */}
       <Center key="main-center">
-        {/* Base structure — swaps by color */}
-        <Model key={baseUrl_int} url={baseUrl_int}
-          visible={viewMode === "interior"}
-          onLoaded={
-            handleModelLoaded
-
-        } />
-        <Model key={baseUrl_ext} url={baseUrl_ext}
-          visible={viewMode === "exterior"}
-          onLoaded={handleModelLoaded} />
+        {/* Base structure — dynamically loads based on viewMode and color */}
+        <Model 
+          key={baseUrl} 
+          url={baseUrl}
+          visible={true}
+          onLoaded={handleModelLoaded} 
+        />
 
         {/* Roof — slides away in interior view, swaps by color */}
         <AnimatedModel
@@ -362,34 +365,39 @@ const SceneContent = ({
           onLoaded={enableShadows}
         />
 
-        {/* Interior models — only visible in interior view */}
+        {/* Interior models — visible in both views (shows through windows/doors) */}
         <Model
           key={bedUrl}
           url={bedUrl}
-          visible={viewMode === "interior"}
+          visible={true}
           onLoaded={enableShadows}
         />
         <Model
           url={MODEL_URLS.kitchen}
-          visible={viewMode === "interior"}
+          visible={true}
           onLoaded={enableShadows}
         />
         <Model
           key={counterTopUrl}
           url={counterTopUrl}
-          visible={viewMode === "interior"}
+          visible={true}
           onLoaded={enableShadows}
         />
         {config.selectedCabinet === "full" && (
           <Model
             url={MODEL_URLS.cabinetDoor}
-            visible={viewMode === "interior"}
+            visible={true}
             onLoaded={enableShadows}
           />
         )}
         {config.deckSelection === true && (
           <Model url={MODEL_URLS.deck} onLoaded={enableShadows} />
         )}
+        <Model
+          key={windowUrl}
+          url={windowUrl}
+          onLoaded={enableShadows}
+        />
       </Center>
       {/* </group> */}
 
@@ -419,6 +427,20 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
   const [modelHeight, setModelHeight] = useState(0);
   const [modelReady, setModelReady] = useState(false);
   const [roofVisible, setRoofVisible] = useState(true);
+
+  const handleHeightChange = useCallback((height) => {
+    setModelHeight((prev) => {
+      if (Math.abs(prev - height) < 0.001) return prev;
+      return height;
+    });
+  }, []);
+
+  const handleMaxSizeChange = useCallback((size) => {
+    setModelMaxSize((prev) => {
+      if (prev !== null && Math.abs(prev - size) < 0.001) return prev;
+      return size;
+    });
+  }, []);
 
   const handleReady = useCallback(() => setModelReady(true), []);
 
@@ -476,9 +498,9 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
           <SceneContent
             viewMode={viewMode}
             config={config}
-            onHeightChange={setModelHeight}
+            onHeightChange={handleHeightChange}
             onDistanceChange={setCameraDistance}
-            onModelMaxSizeChange={setModelMaxSize}
+            onModelMaxSizeChange={handleMaxSizeChange}
             modelMaxSize={modelMaxSize}
             cameraRef={cameraRef}
             modelHeight={modelHeight}

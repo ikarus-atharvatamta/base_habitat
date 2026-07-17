@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import toast, { Toaster } from 'react-hot-toast';
 import ModelViewer from './components/ModelViewer';
 import RightPanel, { TitleSection } from './components/RightPanel';
 import { X, Home, Layers, Info, DollarSign, PenTool, PhoneCall, Building2, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -10,6 +12,9 @@ const Layout = () => {
 
   // Configuration state.
   const [selectedColor, setSelectedColor] = useState('dark'); // 'light' or 'dark'
+  const [sidingColor, setSidingColor] = useState('dark'); // 'light' or 'dark'
+  const [roofColor, setRoofColor] = useState('dark'); // 'light' or 'dark'
+  const [windowMaterial, setWindowMaterial] = useState('wood-pvc'); // 'wood-pvc' or 'galvanized-aluminium'
   const [selectedBed, setSelectedBed] = useState('Mezzanine_Bunk');     // 'Mezzanine Bunk' or 'Mezzanine Bunk'
   const [selectedCabinet, setSelectedCabinet] = useState('stripped'); // 'stripped' or 'full'
   const [selectedLayout, setSelectedLayout] = useState('base1'); // 'base1' or 'base1plus'
@@ -17,14 +22,85 @@ const Layout = () => {
   const [deckSelection, setDeckSelection] = useState(false)
   //add a state for counter top
   const [selectedCounterTop, setSelectedCounterTop] = useState('stainless_steel') // 'stainless_steel' or 'wood_island'
+  
+  // Add-ons state
+  const [couchSelection, setCouchSelection] = useState(false);
+  const [customLighting, setCustomLighting] = useState(false);
+  const [wardrobeSelection, setWardrobeSelection] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    
+    const selectedColorParam = params.get('selectedColor');
+    if (selectedColorParam) setSelectedColor(selectedColorParam);
+    
+    const sidingColorParam = params.get('sidingColor');
+    if (sidingColorParam) setSidingColor(sidingColorParam);
+    
+    const roofColorParam = params.get('roofColor');
+    if (roofColorParam) setRoofColor(roofColorParam);
+    
+    const windowMaterialParam = params.get('windowMaterial');
+    if (windowMaterialParam) setWindowMaterial(windowMaterialParam);
+    
+    const selectedBedParam = params.get('selectedBed');
+    if (selectedBedParam) setSelectedBed(selectedBedParam);
+    
+    const selectedCabinetParam = params.get('selectedCabinet');
+    if (selectedCabinetParam) setSelectedCabinet(selectedCabinetParam);
+    
+    const selectedLayoutParam = params.get('selectedLayout');
+    if (selectedLayoutParam) setSelectedLayout(selectedLayoutParam);
+    
+    const deckSelectionParam = params.get('deckSelection');
+    if (deckSelectionParam !== null) setDeckSelection(deckSelectionParam === 'true');
+    
+    const selectedCounterTopParam = params.get('selectedCounterTop');
+    if (selectedCounterTopParam) setSelectedCounterTop(selectedCounterTopParam);
+    
+    const couchSelectionParam = params.get('couchSelection');
+    if (couchSelectionParam !== null) setCouchSelection(couchSelectionParam === 'true');
+    
+    const customLightingParam = params.get('customLighting');
+    if (customLightingParam !== null) setCustomLighting(customLightingParam === 'true');
+    
+    const wardrobeSelectionParam = params.get('wardrobeSelection');
+    if (wardrobeSelectionParam !== null) setWardrobeSelection(wardrobeSelectionParam === 'true');
+  }, [location.search]);
+
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+    setSidingColor(color);
+    setRoofColor(color);
+  };
+
   //this object gets sent to modelViewer
-  const config = { selectedColor, selectedBed, selectedCabinet, selectedLayout, deckSelection, selectedCounterTop };
+  const config = { selectedColor, sidingColor, roofColor, windowMaterial, selectedBed, selectedCabinet, selectedLayout, deckSelection, selectedCounterTop, couchSelection, customLighting, wardrobeSelection };
+
+  const handleCopyLink = () => {
+    const params = new URLSearchParams();
+    Object.entries(config).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.set(key, value.toString());
+      }
+    });
+    const link = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(link)
+      .then(() => toast.success("Configuration link copied to clipboard!"))
+      .catch((err) => {
+        console.error("Could not copy link: ", err);
+        toast.error("Failed to copy link.");
+      });
+  };
 
   const nextView = () => setViewIndex((prev) => (prev + 1) % 4); // ?
   const prevView = () => setViewIndex((prev) => (prev - 1 + 4) % 4);
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-right-panel-bg font-sans text-charcoal overflow-x-hidden">
+      <Toaster position="top-center" reverseOrder={false} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
@@ -125,12 +201,19 @@ const Layout = () => {
           <div className="md:hidden bg-right-panel-bg">
             <RightPanel
               config={config}
-              onColorChange={setSelectedColor}
+              onColorChange={handleColorChange}
+              onSidingChange={setSidingColor}
+              onRoofChange={setRoofColor}
+              onWindowMaterialChange={setWindowMaterial}
               onBedChange={setSelectedBed}
               onCabinetChange={setSelectedCabinet}
               onLayoutChange={setSelectedLayout}
               onDeckChange={setDeckSelection}
               onCounterTopChange={setSelectedCounterTop}
+              onCouchChange={setCouchSelection}
+              onLightingChange={setCustomLighting}
+              onWardrobeChange={setWardrobeSelection}
+              onCopyConfig={handleCopyLink}
             />
           </div>
         </div>
@@ -139,12 +222,19 @@ const Layout = () => {
         <div className="hidden md:block w-full md:w-[50%] bg-right-panel-bg overflow-y-auto custom-scrollbar border-l border-warm-neutral-dark">
           <RightPanel
             config={config}
-            onColorChange={setSelectedColor}
+            onColorChange={handleColorChange}
+            onSidingChange={setSidingColor}
+            onRoofChange={setRoofColor}
+            onWindowMaterialChange={setWindowMaterial}
             onBedChange={setSelectedBed}
             onCabinetChange={setSelectedCabinet}
             onLayoutChange={setSelectedLayout}
             onDeckChange={setDeckSelection}
             onCounterTopChange={setSelectedCounterTop}
+            onCouchChange={setCouchSelection}
+            onLightingChange={setCustomLighting}
+            onWardrobeChange={setWardrobeSelection}
+            onCopyConfig={handleCopyLink}
           />
         </div>
       </div>

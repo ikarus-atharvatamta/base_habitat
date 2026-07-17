@@ -1,11 +1,11 @@
 import React from 'react';
 
-const OptionCard = ({ title, subtitle, price, swatchColor, selected, description, list, onClick, children }) => {
+const OptionCard = ({ title, subtitle, price, swatchColor, selected, description, list, onClick, children, swatchRound }) => {
     return (
         <div
             onClick={onClick}
             className={`p-6 rounded-2xl flex flex-col gap-4 border transition-all cursor-pointer ${selected
-                ? 'border-samara-blue bg-white shadow-sm ring-1 ring-samara-blue/20'
+                ? 'border-[#828282] bg-[#fdfdf7] shadow-sm'
                 : 'border-transparent bg-card-bg hover:bg-card-hover'
                 }`}
         >
@@ -17,8 +17,13 @@ const OptionCard = ({ title, subtitle, price, swatchColor, selected, description
 
                 {swatchColor && (
                     <div
-                        className="w-10 h-10 md:w-12 md:h-12 rounded-md border border-black/10 shrink-0"
-                        style={{ backgroundColor: swatchColor }}
+                        className={`w-10 h-10 md:w-12 md:h-12 border border-black/10 shrink-0 ${
+                            swatchRound ? "rounded-full" : "rounded-md"
+                        }`}
+                        style={{
+                            background: swatchColor.includes("gradient") ? swatchColor : undefined,
+                            backgroundColor: swatchColor.includes("gradient") ? undefined : swatchColor
+                        }}
                     />
                 )}
                 {price && (

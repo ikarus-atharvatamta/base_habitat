@@ -259,11 +259,12 @@ const SceneContent = ({
   const { size, camera: threeCamera } = useThree();
 
   const baseUrl_ext =
-    MODEL_URLS.base_ext[config.selectedColor] || MODEL_URLS.base_ext.light;
+    MODEL_URLS.base_ext[config.sidingColor] || MODEL_URLS.base_ext.light;
   const baseUrl_int =
-    MODEL_URLS.base_int[config.selectedColor] || MODEL_URLS.base_int.light;
+    MODEL_URLS.base_int[config.sidingColor] || MODEL_URLS.base_int.light;
+  const baseUrl = viewMode === "interior" ? baseUrl_int : baseUrl_ext;
   const roofUrl =
-    MODEL_URLS.roof[config.selectedColor] || MODEL_URLS.roof.light;
+    MODEL_URLS.roof[config.roofColor] || MODEL_URLS.roof.light;
   const bedUrl = MODEL_URLS.bed[config.selectedBed] || MODEL_URLS.bed.Mezzanine_king;
     const counterTopUrl = MODEL_URLS.countertop[config.selectedCounterTop] || MODEL_URLS.countertop.stainless_steel;
 
@@ -336,9 +337,13 @@ const SceneContent = ({
     <Suspense fallback={null}>
       {/* <group rotation={[0, Math.PI / 6, 0]}> */}
       <Center key="main-center">
-        {/* Base structure — swaps by color */}
-        <Model key={baseUrl_ext} url={baseUrl_ext} onLoaded={handleModelLoaded} visible={viewMode === "exterior"} />
-        <Model key={baseUrl_int} url={baseUrl_int} onLoaded={handleModelLoaded} visible={viewMode === "interior"} />
+        {/* Base structure — dynamically loads based on viewMode and color */}
+        <Model 
+          key={baseUrl} 
+          url={baseUrl}
+          visible={true}
+          onLoaded={handleModelLoaded} 
+        />
 
         {/* Roof — slides away in interior view, swaps by color */}
         <AnimatedModel
@@ -348,28 +353,28 @@ const SceneContent = ({
           onLoaded={enableShadows}
         />
 
-        {/* Interior models — only visible in interior view */}
+        {/* Interior models — visible in both views (shows through windows/doors) */}
         <Model
           key={bedUrl}
           url={bedUrl}
-          visible={viewMode === "interior"}
+          visible={true}
           onLoaded={enableShadows}
         />
         <Model
           url={MODEL_URLS.kitchen}
-          visible={viewMode === "interior"}
+          visible={true}
           onLoaded={enableShadows}
         />
         <Model
           key={counterTopUrl}
           url={counterTopUrl}
-          visible={viewMode === "interior"}
+          visible={true}
           onLoaded={enableShadows}
         />
         {config.selectedCabinet === "full" && (
           <Model
             url={MODEL_URLS.cabinetDoor}
-            visible={viewMode === "interior"}
+            visible={true}
             onLoaded={enableShadows}
           />
         )}
@@ -400,6 +405,20 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
   const [modelHeight, setModelHeight] = useState(0);
   const [modelReady, setModelReady] = useState(false);
   const [roofVisible, setRoofVisible] = useState(true);
+
+  const handleHeightChange = useCallback((height) => {
+    setModelHeight((prev) => {
+      if (Math.abs(prev - height) < 0.001) return prev;
+      return height;
+    });
+  }, []);
+
+  const handleMaxSizeChange = useCallback((size) => {
+    setModelMaxSize((prev) => {
+      if (prev !== null && Math.abs(prev - size) < 0.001) return prev;
+      return size;
+    });
+  }, []);
 
   const handleReady = useCallback(() => setModelReady(true), []);
 
@@ -450,9 +469,9 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
           <SceneContent
             viewMode={viewMode}
             config={config}
-            onHeightChange={setModelHeight}
+            onHeightChange={handleHeightChange}
             onDistanceChange={setCameraDistance}
-            onModelMaxSizeChange={setModelMaxSize}
+            onModelMaxSizeChange={handleMaxSizeChange}
             modelMaxSize={modelMaxSize}
             cameraRef={cameraRef}
             modelHeight={modelHeight}
