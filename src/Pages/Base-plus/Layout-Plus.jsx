@@ -74,6 +74,11 @@ const LayoutPlus = () => {
     setSelectedColor(color);
     setSidingColor(color);
     setRoofColor(color);
+    if (color === "dark") {
+      setWindowMaterial("wood-pvc");
+    } else if (color === "light") {
+      setWindowMaterial("galvanized-aluminium");
+    }
   };
 
   //this object gets sent to modelViewer
