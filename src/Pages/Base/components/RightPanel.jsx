@@ -32,8 +32,14 @@ const RightPanel = ({
   onCouchChange,
   onLightingChange,
   onWardrobeChange,
-  onCopyConfig
-
+  lightSettings,
+  setLightSettings,
+  activeLightControls,
+  availableLights,
+  onCopyConfig,
+  onToneMappingChange,
+  onToneMappingExposureChange,
+  onViewModeChange
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,18 +66,24 @@ const RightPanel = ({
         </h3>
         <OptionCard
           title="Base 1"
-          subtitle="Studio - 1 Bed, 1 Bathroom - 940sq. ft"
-          // swatchColor="#1c1515" 
+          subtitle="Studio - 1 Bed, 1 Bathroom, 1 Sleeping Loft 1 Sleeping Loft – 960 sq ft"
           selected={!isBasePlus}
           onClick={() => navigate("/basehabitat")}
-        />
+        >
+          <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
+            See website
+          </a>
+        </OptionCard>
         <OptionCard
           title="Base 1+"
-          subtitle="Studio - 1 Bed, 1 Bathroom - 940sq. ft"
-          // swatchColor="#e7d9d3"
+          subtitle="Studio - 1 Bed, 1 Bathroom, 1-2 Bed, 1 Sleeping loft 1-2 Bed, 1 Sleeping loft – 1200 sq ft"
           selected={isBasePlus}
           onClick={() => navigate("/basehabitat/plus")}
-        />
+        >
+          <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
+            See website
+          </a>
+        </OptionCard>
       </section>
 
       {/* Exterior Section */}
@@ -210,14 +222,7 @@ const RightPanel = ({
               selected={config.roofColor === "dark"}
               onClick={() => onRoofChange("dark")}
             />
-            <OptionCard
-              title="Corrugated - Galvalum"
-              subtitle='1/2" Corrugated steel - Exposed fasteners'
-              swatchColor="linear-gradient(135deg, #d8d8d8 0%, #f0f0f0 100%)"
-              swatchRound={true}
-              selected={config.roofColor === "corrugated-galvalum"}
-              onClick={() => onRoofChange("corrugated-galvalum")}
-            />
+
           </div>
         </div>
 
@@ -290,7 +295,7 @@ const RightPanel = ({
           <div className="grid grid-cols-2 gap-8 pt-1">
             {/* Stripped Down */}
             <div 
-              onClick={() => onCabinetChange("stripped")}
+              onClick={() => { onCabinetChange("stripped"); onViewModeChange?.("interior"); }}
               className="flex flex-col items-start gap-4 cursor-pointer select-none group"
             >
               <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
@@ -325,7 +330,7 @@ const RightPanel = ({
 
             {/* Classic */}
             <div 
-              onClick={() => onCabinetChange("full")}
+              onClick={() => { onCabinetChange("full"); onViewModeChange?.("interior"); }}
               className="flex flex-col items-start gap-4 cursor-pointer select-none group"
             >
               <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
@@ -371,13 +376,13 @@ const RightPanel = ({
             title=" King Size Bed"
             subtitle="King size comfort"
             selected={config.selectedBed === "Mezzanine_king"}
-            onClick={() => onBedChange("Mezzanine_king")}
+            onClick={() => { onBedChange("Mezzanine_king"); onViewModeChange?.("interior"); }}
           />
           <OptionCard
             title="Base Bunk Bed"
             subtitle="1 Double bed and 1 single bed & extra play area"
             selected={config.selectedBed === "Mezzanine_Bunk"}
-            onClick={() => onBedChange("Mezzanine_Bunk")}
+            onClick={() => { onBedChange("Mezzanine_Bunk"); onViewModeChange?.("interior"); }}
           />
         </div>
       </section>
@@ -393,14 +398,13 @@ const RightPanel = ({
             title="Stainless Steel"
             // subtitle="Kitchen base only"
             selected={config.selectedCounterTop === "stainless_steel"}
-            onClick={() => { onCounterTopChange("stainless_steel"); }}
+            onClick={() => { onCounterTopChange("stainless_steel"); onViewModeChange?.("interior"); }}
           />
           <OptionCard
             title="Wood Island"
             // subtitle="Kitchen with cabinet doors"
-
             selected={config.selectedCounterTop === "wood_island"}
-            onClick={() => { onCounterTopChange("wood_island"); }}
+            onClick={() => { onCounterTopChange("wood_island"); onViewModeChange?.("interior"); }}
           />
         </div>
       </section>
@@ -420,6 +424,12 @@ const RightPanel = ({
             selected={config.deckSelection===true}
             onClick={()=>onDeckChange(!config.deckSelection)}
           />
+          <OptionCard
+            title="The bigger deck"
+            subtitle=""
+            selected={false}
+            onClick={() => {}}
+          />
         </div>
       </section>
 
@@ -434,25 +444,178 @@ const RightPanel = ({
 
         <div className="flex flex-col gap-4">
           <OptionCard
-            title="Journey Couch & Stools"
+            title="Journey Couch, Coffee Table & Stools (2)"
             subtitle="Designed in collaboration with Mitz Takahashi"
             selected={config.couchSelection === true}
-            onClick={() => onCouchChange(!config.couchSelection)}
+            onClick={() => { onCouchChange(!config.couchSelection); onViewModeChange?.("interior"); }}
           />
           <OptionCard
             title="Custom Base Lighting"
             subtitle="Wall sconces and island light – Produced by Hamster Lighting"
             selected={config.customLighting === true}
-            onClick={() => onLightingChange(!config.customLighting)}
+            onClick={() => { onLightingChange(!config.customLighting); onViewModeChange?.("interior"); }}
           />
           {isBasePlus && (
             <OptionCard
               title="Built-in wardrobe (Base 1+ only)"
               subtitle='16" panels - Raised joint - Hidden fasteners'
               selected={config.wardrobeSelection === true}
-              onClick={() => onWardrobeChange(!config.wardrobeSelection)}
+              onClick={() => { onWardrobeChange(!config.wardrobeSelection); onViewModeChange?.("interior"); }}
             />
           )}
+
+          {activeLightControls && activeLightControls.length > 0 && (
+            <div className="flex flex-col gap-4 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
+              <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
+                Global Renderer Settings
+              </h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-[14px] font-normal tracking-tight text-charcoal">Tone Mapping</label>
+                <select 
+                  value={config.toneMapping ?? 0} 
+                  onChange={(e) => onToneMappingChange?.(parseInt(e.target.value))}
+                  className="p-2 border border-black/10 rounded-lg bg-white outline-none focus:border-black/30"
+                >
+                  <option value={0}>No Tone Mapping</option>
+                  <option value={1}>Linear</option>
+                  <option value={2}>Reinhard</option>
+                  <option value={3}>Cineon</option>
+                  <option value={4}>ACES Filmic</option>
+                  <option value={6}>AgX</option>
+                  <option value={7}>Neutral</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2 mt-2">
+                <div className="flex justify-between text-xs text-subtext-gray items-center">
+                  <label className="text-[14px] font-normal tracking-tight text-charcoal">Exposure</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={config.toneMappingExposure ?? 1.0}
+                    onChange={(e) => onToneMappingExposureChange?.(parseFloat(e.target.value) || 0)}
+                    className="w-16 p-1 border border-black/10 rounded text-right bg-white text-charcoal outline-none focus:border-black/30"
+                  />
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="5" 
+                  step="0.05" 
+                  value={config.toneMappingExposure ?? 1.0} 
+                  onChange={(e) => onToneMappingExposureChange?.(parseFloat(e.target.value) || 0)}
+                  className="w-full accent-[#e54d42]"
+                />
+                {config.toneMapping === 0 && (
+                  <span className="text-[10px] text-[#e54d42] leading-tight mt-1">
+                    * Exposure has no effect when "No Tone Mapping" is selected. Please select a tone mapping algorithm above.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeLightControls && activeLightControls.length > 0 && activeLightControls.map(modelName => {
+            const lightsInfo = availableLights?.[modelName];
+            if (!lightsInfo || lightsInfo.length === 0) {
+              return (
+                <div key={`light-controls-${modelName}`} className="flex flex-col gap-4 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
+                  <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
+                    {modelName}
+                  </h3>
+                  <p className="text-sm text-subtext-gray">No lights found in this model.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div key={`light-controls-${modelName}`} className="flex flex-col gap-6 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
+                <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
+                  {modelName} Light Controls
+                </h3>
+                
+                {lightsInfo.map((light, index) => {
+                  const intensityVal = lightSettings?.[modelName]?.[light.id]?.intensity ?? (light.defaultMultiplier !== undefined ? light.defaultMultiplier : 1);
+                  const colorVal = lightSettings?.[modelName]?.[light.id]?.color ?? light.defaultColor;
+
+                  console.log(`[DEBUG] UI Slider for ${modelName} -> ${light.name}:`, {
+                    intensityVal, 
+                    colorVal, 
+                    defaultMultiplier: light.defaultMultiplier, 
+                    defaultColor: light.defaultColor,
+                    lightSettingsForId: lightSettings?.[modelName]?.[light.id]
+                  });
+                  const rangeVal = lightSettings?.[modelName]?.[light.id]?.range ?? light.defaultDistance;
+
+                  return (
+                    <div key={light.id} className="flex flex-col gap-3 p-3 border rounded-lg border-black/5 bg-white">
+                      <h4 className="text-[15px] font-medium tracking-tight text-charcoal">
+                        {light.name} <span className="text-xs text-subtext-gray font-normal">({light.type})</span>
+                      </h4>
+                      
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between text-xs text-subtext-gray items-center">
+                          <span>Intensity</span>
+                          <input 
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={intensityVal}
+                            onChange={(e) => setLightSettings(prev => ({
+                              ...prev,
+                              [modelName]: {
+                                ...(prev[modelName] || {}),
+                                [light.id]: { 
+                                  ...(prev[modelName]?.[light.id] || {}), 
+                                  intensity: parseFloat(e.target.value) || 0 
+                                }
+                              }
+                            }))}
+                            className="w-16 p-1 border border-black/10 rounded text-right bg-white text-charcoal outline-none focus:border-black/30"
+                          />
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="10" 
+                          step="0.1" 
+                          value={intensityVal} 
+                          onChange={(e) => setLightSettings(prev => ({
+                            ...prev,
+                            [modelName]: {
+                              ...(prev[modelName] || {}),
+                              [light.id]: { ...(prev[modelName]?.[light.id] || {}), intensity: parseFloat(e.target.value) }
+                            }
+                          }))}
+                          className="w-full accent-[#e54d42]"
+                        />
+                      </div>
+
+
+
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[14px] font-normal tracking-tight text-charcoal">
+                          Color
+                        </span>
+                        <input 
+                          type="color" 
+                          value={colorVal} 
+                          onChange={(e) => setLightSettings(prev => ({
+                            ...prev,
+                            [modelName]: {
+                              ...(prev[modelName] || {}),
+                              [light.id]: { ...(prev[modelName]?.[light.id] || {}), color: e.target.value }
+                            }
+                          }))}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </section>
 

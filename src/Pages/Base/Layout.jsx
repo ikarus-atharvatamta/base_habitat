@@ -22,11 +22,75 @@ const Layout = () => {
   const [deckSelection, setDeckSelection] = useState(false)
   //add a state for counter top
   const [selectedCounterTop, setSelectedCounterTop] = useState('stainless_steel') // 'stainless_steel' or 'wood_island'
+  const [toneMapping, setToneMapping] = useState(6); // 6 is THREE.AgXToneMapping
+  const [toneMappingExposure, setToneMappingExposure] = useState(0.7);
   
   // Add-ons state
   const [couchSelection, setCouchSelection] = useState(false);
   const [customLighting, setCustomLighting] = useState(false);
   const [wardrobeSelection, setWardrobeSelection] = useState(false);
+  const [lightSettings, setLightSettings] = useState({});
+  const [activeLightControls, setActiveLightControls] = useState([]);
+  const [availableLights, setAvailableLights] = useState({});
+
+  useEffect(() => {
+    window.enableLightControls = (modelName) => {
+      if (!modelName) {
+        const allModels = window.__MODEL_LIGHTS__ ? Object.keys(window.__MODEL_LIGHTS__) : [];
+        if (allModels.length === 0) {
+          console.warn("No models with lights have been loaded yet.");
+          return;
+        }
+        setActiveLightControls(prev => [...new Set([...prev, ...allModels])]);
+        
+        setLightSettings(prev => {
+          const newSettings = { ...prev };
+          allModels.forEach(m => {
+            newSettings[m] = newSettings[m] || {};
+          });
+          return newSettings;
+        });
+        console.log(`Light controls enabled for all models: ${allModels.join(', ')}`);
+        return;
+      }
+
+      setActiveLightControls(prev => [...new Set([...prev, modelName])]);
+      
+      // Initialize if empty, but don't overwrite if it already exists
+      setLightSettings(prev => ({
+        ...prev,
+        [modelName]: prev[modelName] || {}
+      }));
+      console.log(`Light controls enabled for: ${modelName}`);
+    };
+    
+    window.disableLightControls = (modelName) => {
+      if (modelName) {
+        setActiveLightControls(prev => prev.filter(name => name !== modelName));
+        console.log(`Light controls disabled for: ${modelName}`);
+      } else {
+        setActiveLightControls([]);
+        console.log("All light controls disabled.");
+      }
+    };
+
+    const handleLightsUpdated = (e) => {
+      const { fileName, lightsInfo } = e.detail;
+      setAvailableLights(prev => ({ ...prev, [fileName]: lightsInfo }));
+    };
+    window.addEventListener('model-lights-updated', handleLightsUpdated);
+
+    // Initial check for already registered models
+    if (window.__MODEL_LIGHTS__) {
+      setAvailableLights(window.__MODEL_LIGHTS__);
+    }
+
+    return () => {
+      delete window.enableLightControls;
+      delete window.disableLightControls;
+      window.removeEventListener('model-lights-updated', handleLightsUpdated);
+    };
+  }, []);
 
   const location = useLocation();
 
@@ -82,7 +146,7 @@ const Layout = () => {
   };
 
   //this object gets sent to modelViewer
-  const config = { selectedColor, sidingColor, roofColor, windowMaterial, selectedBed, selectedCabinet, selectedLayout, deckSelection, selectedCounterTop, couchSelection, customLighting, wardrobeSelection };
+  const config = { selectedColor, sidingColor, roofColor, windowMaterial, selectedBed, selectedCabinet, selectedLayout, deckSelection, selectedCounterTop, couchSelection, customLighting, wardrobeSelection, lightSettings, activeLightControls, toneMapping, toneMappingExposure };
 
   const handleCopyLink = () => {
     const params = new URLSearchParams();
@@ -218,7 +282,14 @@ const Layout = () => {
               onCouchChange={setCouchSelection}
               onLightingChange={setCustomLighting}
               onWardrobeChange={setWardrobeSelection}
+              lightSettings={lightSettings}
+              setLightSettings={setLightSettings}
+              activeLightControls={activeLightControls}
+              availableLights={availableLights}
               onCopyConfig={handleCopyLink}
+              onToneMappingChange={setToneMapping}
+              onToneMappingExposureChange={setToneMappingExposure}
+              onViewModeChange={setViewMode}
             />
           </div>
         </div>
@@ -239,7 +310,14 @@ const Layout = () => {
             onCouchChange={setCouchSelection}
             onLightingChange={setCustomLighting}
             onWardrobeChange={setWardrobeSelection}
+            lightSettings={lightSettings}
+            setLightSettings={setLightSettings}
+            activeLightControls={activeLightControls}
+            availableLights={availableLights}
             onCopyConfig={handleCopyLink}
+            onToneMappingChange={setToneMapping}
+            onToneMappingExposureChange={setToneMappingExposure}
+            onViewModeChange={setViewMode}
           />
         </div>
       </div>

@@ -55,6 +55,33 @@ function LoadingOverlay() {
   );
 }
 
+const ToneMappingUpdater = ({ toneMapping, toneMappingExposure, activeLightControls }) => {
+  const { gl, scene } = useThree();
+  
+  useEffect(() => {
+    const isAnyControlActive = activeLightControls && activeLightControls.length > 0;
+    
+    // Only apply custom tone mapping if a light control is active. Otherwise revert to defaults.
+    gl.toneMapping = isAnyControlActive ? toneMapping : THREE.AgXToneMapping;
+    
+    if (toneMappingExposure !== undefined) {
+      gl.toneMappingExposure = isAnyControlActive ? toneMappingExposure : 0.7;
+    }
+    
+    scene.traverse((child) => {
+      if (child.isMesh && child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.needsUpdate = true);
+        } else {
+          child.material.needsUpdate = true;
+        }
+      }
+    });
+  }, [toneMapping, toneMappingExposure, gl, scene, activeLightControls]);
+  
+  return null;
+};
+
 function CameraHandler({
   viewIndex,
   viewMode,
@@ -170,15 +197,114 @@ function CameraHandler({
   );
 }
 
-function AnimatedModel({ url, visible = true, onLoaded }) {
+function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLightControls }) {
   const { scene } = useGLTF(url);
   const cloned = useMemo(() => scene.clone(true), [scene]);
   const groupRef = useRef();
   const [shouldRender, setShouldRender] = useState(visible);
+  
+  const fileName = url.split('/').pop();
+  const isActive = activeLightControls?.includes(fileName);
 
   useEffect(() => {
     if (cloned && onLoaded) onLoaded(cloned);
   }, [cloned, onLoaded]);
+
+  useEffect(() => {
+    if (cloned) {
+      const lightsInfo = [];
+      cloned.traverse((child) => {
+        if (child.isLight) {
+          if (child.userData.originalIntensity === undefined) {
+            child.userData.originalIntensity = child.intensity;
+          }
+          if (child.userData.originalColor === undefined) {
+            child.userData.originalColor = "#" + child.color.getHexString();
+          }
+          
+          let defaultMultiplier = 1.0;
+          let defaultColor = child.userData.originalColor;
+
+          if (fileName === "Mezzanine Bunk.glb" && (child.name === "Point003" || child.name === "Point004")) {
+            defaultMultiplier = 0.1;
+            defaultColor = "#965027";
+          } else if (fileName === "Mezzanine King.glb" && (child.name === "Point005" || child.name === "Point006")) {
+            defaultMultiplier = 0.05;
+            defaultColor = "#965027";
+          } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb") {
+            if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
+              defaultMultiplier = 0.1;
+              defaultColor = "#965027";
+            } else if (["Spot", "Spot001_1"].includes(child.name)) {
+              defaultMultiplier = 0.04;
+              defaultColor = "#a4765b";
+            } else if (child.name === "Spot002") {
+              defaultMultiplier = 0.02;
+              defaultColor = "#965027";
+            } else if (child.name === "Spot002_1") {
+              defaultMultiplier = 0.05;
+              defaultColor = "#965027";
+            } else if (child.name === "Sun") {
+              defaultMultiplier = 0.002;
+              defaultColor = "#965027";
+            } else if (child.name === "Sun001") {
+              defaultMultiplier = 0;
+              defaultColor = "#965027";
+            } else {
+              defaultColor = "#965027";
+            }
+          }
+          
+          const lightId = child.name || child.uuid;
+          
+          console.log(`[DEBUG] Processing light in ${fileName}:`, {
+            id: lightId,
+            name: child.name,
+            defaultMultiplier,
+            defaultColor,
+          });
+
+          lightsInfo.push({
+            id: lightId,
+            name: child.name || child.type,
+            type: child.type,
+            defaultIntensity: child.userData.originalIntensity,
+            defaultMultiplier: defaultMultiplier,
+            defaultColor: defaultColor,
+            defaultDistance: child.distance || 0,
+          });
+
+          const userIntensity = lightSettings?.[fileName]?.[lightId]?.intensity;
+          const userColor = lightSettings?.[fileName]?.[lightId]?.color;
+          const userRange = lightSettings?.[fileName]?.[lightId]?.range;
+
+          if (isActive && userIntensity !== undefined) {
+            child.intensity = child.userData.originalIntensity * userIntensity;
+          } else {
+            child.intensity = child.userData.originalIntensity * defaultMultiplier;
+          }
+          
+          if (isActive && userColor) {
+            child.color.set(userColor);
+          } else {
+            child.color.set(defaultColor);
+          }
+          
+          if (child.distance !== undefined) {
+            if (isActive && userRange !== undefined) {
+              child.distance = userRange;
+            } else {
+              child.distance = child.userData.originalDistance || 0;
+            }
+          }
+        }
+      });
+      
+      if (!window.__MODEL_LIGHTS__) window.__MODEL_LIGHTS__ = {};
+      window.__MODEL_LIGHTS__[fileName] = lightsInfo;
+      window.dispatchEvent(new CustomEvent('model-lights-updated', { detail: { fileName, lightsInfo } }));
+    }
+  }, [cloned, lightSettings, fileName, isActive]);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
@@ -213,42 +339,134 @@ function AnimatedModel({ url, visible = true, onLoaded }) {
   );
 }
 
-function Model({ url, visible = true, onLoaded }) {
+function Model({ url, visible = true, onLoaded, lightSettings, activeLightControls }) {
   const { scene } = useGLTF(url);
   const cloned = useMemo(() => scene.clone(true), [scene]);
   useEffect(() => {
     if (cloned && onLoaded) onLoaded(cloned);
   }, [cloned, onLoaded]);
+  
+  const fileName = url.split('/').pop();
+  const isActive = activeLightControls?.includes(fileName);
+
+  useEffect(() => {
+    if (cloned) {
+      const lightsInfo = [];
+      cloned.traverse((child) => {
+        if (child.isLight) {
+          if (child.userData.originalIntensity === undefined) {
+            child.userData.originalIntensity = child.intensity;
+          }
+          if (child.userData.originalColor === undefined) {
+            child.userData.originalColor = "#" + child.color.getHexString();
+          }
+          
+          let defaultMultiplier = 1.0;
+          let defaultColor = child.userData.originalColor;
+
+          if (fileName === "Mezzanine Bunk.glb" && (child.name === "Point003" || child.name === "Point004")) {
+            defaultMultiplier = 0.1;
+            defaultColor = "#965027";
+          } else if (fileName === "Mezzanine King.glb" && (child.name === "Point005" || child.name === "Point006")) {
+            defaultMultiplier = 0.05;
+            defaultColor = "#965027";
+          } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb") {
+            if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
+              defaultMultiplier = 0.1;
+              defaultColor = "#965027";
+            } else if (["Spot", "Spot001_1"].includes(child.name)) {
+              defaultMultiplier = 0.04;
+              defaultColor = "#a4765b";
+            } else if (child.name === "Spot002") {
+              defaultMultiplier = 0.02;
+              defaultColor = "#965027";
+            } else if (child.name === "Spot002_1") {
+              defaultMultiplier = 0.05;
+              defaultColor = "#965027";
+            } else if (child.name === "Sun") {
+              defaultMultiplier = 0.002;
+              defaultColor = "#965027";
+            } else if (child.name === "Sun001") {
+              defaultMultiplier = 0;
+              defaultColor = "#965027";
+            } else {
+              defaultColor = "#965027";
+            }
+          }
+          
+          const lightId = child.name || child.uuid;
+          lightsInfo.push({
+            id: lightId,
+            name: child.name || child.type,
+            type: child.type,
+            defaultIntensity: child.userData.originalIntensity,
+            defaultMultiplier: defaultMultiplier,
+            defaultColor: defaultColor,
+            defaultDistance: child.distance || 0,
+          });
+
+          const userIntensity = lightSettings?.[fileName]?.[lightId]?.intensity;
+          const userColor = lightSettings?.[fileName]?.[lightId]?.color;
+          const userRange = lightSettings?.[fileName]?.[lightId]?.range;
+
+          if (isActive && userIntensity !== undefined) {
+            child.intensity = child.userData.originalIntensity * userIntensity;
+          } else {
+            child.intensity = child.userData.originalIntensity * defaultMultiplier;
+          }
+          
+          if (isActive && userColor) {
+            child.color.set(userColor);
+          } else {
+            child.color.set(defaultColor);
+          }
+          
+          if (child.distance !== undefined) {
+            if (isActive && userRange !== undefined) {
+              child.distance = userRange;
+            } else {
+              child.distance = child.userData.originalDistance || 0;
+            }
+          }
+        }
+      });
+
+      if (!window.__MODEL_LIGHTS__) window.__MODEL_LIGHTS__ = {};
+      window.__MODEL_LIGHTS__[fileName] = lightsInfo;
+      window.dispatchEvent(new CustomEvent('model-lights-updated', { detail: { fileName, lightsInfo } }));
+    }
+  }, [cloned, lightSettings, fileName, isActive]);
+
   return <primitive object={cloned} visible={visible} />;
 }
 
 const MODEL_URLS = {
   base_ext: {
-    light: `${import.meta.env.BASE_URL}base/models/model-17july26/Light_Base.glb`,
-    dark: `${import.meta.env.BASE_URL}base/models/model-17july26/Black_Base.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Base.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Base.glb`,
   },
   base_int: {
-    dark: `${import.meta.env.BASE_URL}base/models/model-17july26/Black_Base.glb`,
-    light: `${import.meta.env.BASE_URL}base/models/model-17july26/Light_Base.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Base.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Base.glb`,
   },
   roof: {
-    light: `${import.meta.env.BASE_URL}base/models/model-17july26/Light_Roof.glb`,
-    dark: `${import.meta.env.BASE_URL}base/models/model-17july26/Black_Roof.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Roof.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Roof.glb`,
   },
   bed: {
-    Mezzanine_king: `${import.meta.env.BASE_URL}base/models/model-17july26/Mezzanine King.glb`,
-    Mezzanine_Bunk: `${import.meta.env.BASE_URL}base/models/model-17july26/Mezzanine Bunk.glb`,
+    Mezzanine_king: `${import.meta.env.BASE_URL}base/models/model-7oct26/Mezzanine King.glb`,
+    Mezzanine_Bunk: `${import.meta.env.BASE_URL}base/models/model-7oct26/Mezzanine Bunk.glb`,
   },
-  kitchen: `${import.meta.env.BASE_URL}base/models/model-17july26/Kitchen.glb`,
-  cabinetDoor: `${import.meta.env.BASE_URL}base/models/model-17july26/Kitchen_Cabinet_Door.glb`,
-  deck: `${import.meta.env.BASE_URL}base/models/model-17july26/Deck.glb`,
+  kitchen: `${import.meta.env.BASE_URL}base/models/model-7oct26/Kitchen.glb`,
+  cabinetDoor: `${import.meta.env.BASE_URL}base/models/model-7oct26/Kitchen_Cabinet_Door.glb`,
+  deck: `${import.meta.env.BASE_URL}base/models/model-7oct26/Deck.glb`,
   countertop: {
-    stainless_steel: `${import.meta.env.BASE_URL}base/models/model-17july26/CounterTopSteel.glb`,
-    wood_island: `${import.meta.env.BASE_URL}base/models/model-17july26/CounterTopWood.glb`,
+    stainless_steel: `${import.meta.env.BASE_URL}base/models/model-7oct26/CounterTopSteel.glb`,
+    wood_island: `${import.meta.env.BASE_URL}base/models/model-7oct26/CounterTopWood.glb`,
   },
   window: {
-    "wood-pvc": `${import.meta.env.BASE_URL}base/models/model-17july26/Wood_Window.glb`,
-    "galvanized-aluminium": `${import.meta.env.BASE_URL}base/models/model-17july26/Alumininum_Window.glb`,
+    "wood-pvc": `${import.meta.env.BASE_URL}base/models/model-7oct26/Wood_Window.glb`,
+    "galvanized-aluminium": `${import.meta.env.BASE_URL}base/models/model-7oct26/Alumininum_Window.glb`,
   },
 };
 
@@ -315,8 +533,8 @@ const SceneContent = ({
     const fov = threeCamera.fov * (Math.PI / 180);
     const fitHeightDistance = modelMaxSize / (2 * Math.tan(fov / 2));
     const fitWidthDistance = fitHeightDistance / aspect;
-    const calculatedDistance =
-      2.2 * Math.max(fitHeightDistance, fitWidthDistance);
+    const baseDistance = 2.2 * Math.max(fitHeightDistance, fitWidthDistance);
+    const calculatedDistance = viewMode === "interior" ? baseDistance * 0.85 : baseDistance;
 
     onDistanceChange(calculatedDistance);
 
@@ -343,6 +561,7 @@ const SceneContent = ({
     onDistanceChange,
     cameraRef,
     onReady,
+    viewMode,
   ]);
 
   return (
@@ -355,6 +574,8 @@ const SceneContent = ({
           url={baseUrl}
           visible={true}
           onLoaded={handleModelLoaded} 
+          lightSettings={config.lightSettings}
+          activeLightControls={config.activeLightControls}
         />
 
         {/* Roof — slides away in interior view, swaps by color */}
@@ -363,6 +584,8 @@ const SceneContent = ({
           url={roofUrl}
           visible={roofVisible}
           onLoaded={enableShadows}
+          lightSettings={config.lightSettings}
+          activeLightControls={config.activeLightControls}
         />
 
         {/* Interior models — visible in both views (shows through windows/doors) */}
@@ -371,32 +594,42 @@ const SceneContent = ({
           url={bedUrl}
           visible={true}
           onLoaded={enableShadows}
+          lightSettings={config.lightSettings}
+          activeLightControls={config.activeLightControls}
         />
         <Model
           url={MODEL_URLS.kitchen}
           visible={true}
           onLoaded={enableShadows}
+          lightSettings={config.lightSettings}
+          activeLightControls={config.activeLightControls}
         />
         <Model
           key={counterTopUrl}
           url={counterTopUrl}
           visible={true}
           onLoaded={enableShadows}
+          lightSettings={config.lightSettings}
+          activeLightControls={config.activeLightControls}
         />
         {config.selectedCabinet === "full" && (
           <Model
             url={MODEL_URLS.cabinetDoor}
             visible={true}
             onLoaded={enableShadows}
+            lightSettings={config.lightSettings}
+            activeLightControls={config.activeLightControls}
           />
         )}
         {config.deckSelection === true && (
-          <Model url={MODEL_URLS.deck} onLoaded={enableShadows} />
+          <Model url={MODEL_URLS.deck} onLoaded={enableShadows} lightSettings={config.lightSettings} activeLightControls={config.activeLightControls} />
         )}
         <Model
           key={windowUrl}
           url={windowUrl}
           onLoaded={enableShadows}
+          lightSettings={config.lightSettings}
+          activeLightControls={config.activeLightControls}
         />
       </Center>
       {/* </group> */}
@@ -471,10 +704,15 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
       >
         <Canvas shadows dpr={[1, 2]} 
         gl={{ 
-          toneMapping: THREE.NoToneMapping, }}
+          toneMapping: config.toneMapping !== undefined ? parseInt(config.toneMapping) : THREE.AgXToneMapping, }}
 
         >
           {/* <Stage> */}
+          <ToneMappingUpdater 
+            toneMapping={config.toneMapping !== undefined ? parseInt(config.toneMapping) : THREE.AgXToneMapping} 
+            toneMappingExposure={config.toneMappingExposure !== undefined ? parseFloat(config.toneMappingExposure) : 0.7}
+            activeLightControls={config.activeLightControls}
+          />
           <PerspectiveCamera
             makeDefault
             ref={cameraRef}

@@ -59,18 +59,24 @@ const RightPanel = ({
         </h3>
         <OptionCard
           title="Base 1"
-          subtitle="Studio - 1 Bed, 1 Bathroom - 940sq. ft"
-          // swatchColor="#1c1515" 
+          subtitle="Studio - 1 Bed, 1 Bathroom - 1 Sleeping Loft – 960 sq ft"
           selected={!isBasePlus}
           onClick={() => navigate("/basehabitat")}
-        />
+        >
+          <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
+            See website
+          </a>
+        </OptionCard>
         <OptionCard
           title="Base 1+"
-          subtitle="Studio - 1 Bed, 1 Bathroom - 940sq. ft"
-          // swatchColor="#e7d9d3"
+          subtitle="Studio - 1 Bed, 1 Bathroom - 1 Sleeping Loft – 1200 sq ft"
           selected={isBasePlus}
           onClick={() => navigate("/basehabitat/plus")}
-        />
+        >
+          <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
+            See website
+          </a>
+        </OptionCard>
       </section>
 
       {/* Exterior Section */}
