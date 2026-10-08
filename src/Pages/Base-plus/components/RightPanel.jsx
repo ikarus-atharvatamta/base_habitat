@@ -70,7 +70,7 @@ const RightPanel = ({
         </OptionCard>
         <OptionCard
           title="Base 1+"
-          subtitle="Studio - 1 Bed, 1 Bathroom - 1 Sleeping Loft – 1200 sq ft"
+          subtitle="Studio - 1 Bed, 1 Bathroom, 1-2 Bed, 1 Sleeping loft 1-2 Bed, 1 Sleeping loft – 1200 sq ft"
           selected={isBasePlus}
           onClick={() => navigate("/basehabitat/plus")}
         >
