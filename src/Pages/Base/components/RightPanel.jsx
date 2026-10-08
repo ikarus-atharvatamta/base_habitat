@@ -425,7 +425,7 @@ const RightPanel = ({
             onClick={()=>onDeckChange(!config.deckSelection)}
           />
           <OptionCard
-            title="The bigger deck"
+            title="The Bigger Deck"
             subtitle=""
             selected={false}
             onClick={() => {}}

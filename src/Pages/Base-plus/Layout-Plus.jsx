@@ -219,6 +219,7 @@ const LayoutPlus = () => {
               onLightingChange={setCustomLighting}
               onWardrobeChange={setWardrobeSelection}
               onCopyConfig={handleCopyLink}
+              onViewModeChange={setViewMode}
             />
           </div>
         </div>
@@ -240,6 +241,7 @@ const LayoutPlus = () => {
             onLightingChange={setCustomLighting}
             onWardrobeChange={setWardrobeSelection}
             onCopyConfig={handleCopyLink}
+            onViewModeChange={setViewMode}
           />
         </div>
       </div>

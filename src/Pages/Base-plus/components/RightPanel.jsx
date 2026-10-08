@@ -32,7 +32,8 @@ const RightPanel = ({
   onCouchChange,
   onLightingChange,
   onWardrobeChange,
-  onCopyConfig
+  onCopyConfig,
+  onViewModeChange
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -215,14 +216,7 @@ const RightPanel = ({
               selected={config.roofColor === "dark"}
               onClick={() => onRoofChange("dark")}
             />
-            <OptionCard
-              title="Corrugated - Galvalum"
-              subtitle='1/2" Corrugated steel - Exposed fasteners'
-              swatchColor="linear-gradient(135deg, #d8d8d8 0%, #f0f0f0 100%)"
-              swatchRound={true}
-              selected={config.roofColor === "corrugated-galvalum"}
-              onClick={() => onRoofChange("corrugated-galvalum")}
-            />
+
           </div>
         </div>
 
@@ -294,7 +288,7 @@ const RightPanel = ({
           <div className="grid grid-cols-2 gap-8 pt-1">
             {/* Stripped Down */}
             <div 
-              onClick={() => onCabinetChange("stripped")}
+              onClick={() => { onCabinetChange("stripped"); onViewModeChange?.("interior"); }}
               className="flex flex-col items-start gap-4 cursor-pointer select-none group"
             >
               <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
@@ -329,7 +323,7 @@ const RightPanel = ({
 
             {/* Classic */}
             <div 
-              onClick={() => onCabinetChange("full")}
+              onClick={() => { onCabinetChange("full"); onViewModeChange?.("interior"); }}
               className="flex flex-col items-start gap-4 cursor-pointer select-none group"
             >
               <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
@@ -375,13 +369,13 @@ const RightPanel = ({
             title=" King Size Bed"
             subtitle="King size comfort"
             selected={config.selectedBed === "Mezzanine_king"}
-            onClick={() => onBedChange("Mezzanine_king")}
+            onClick={() => { onBedChange("Mezzanine_king"); onViewModeChange?.("interior"); }}
           />
           <OptionCard
             title="Base Bunk Bed"
             subtitle="1 Double bed and 1 single bed & extra play area"
             selected={config.selectedBed === "Mezzanine_Bunk"}
-            onClick={() => onBedChange("Mezzanine_Bunk")}
+            onClick={() => { onBedChange("Mezzanine_Bunk"); onViewModeChange?.("interior"); }}
           />
         </div>
       </section>
@@ -397,14 +391,14 @@ const RightPanel = ({
             title="Stainless Steel"
             // subtitle="Kitchen base only"
             selected={config.selectedCounterTop === "stainless_steel"}
-            onClick={() => {onCounterTopChange("stainless_steel") }}
+            onClick={() => { onCounterTopChange("stainless_steel"); onViewModeChange?.("interior"); }}
           />
           <OptionCard
             title="Wood Island"
             // subtitle="Kitchen with cabinet doors"
 
             selected={config.selectedCounterTop === "wood_island"}
-            onClick={() => { onCounterTopChange("wood_island") }}
+            onClick={() => { onCounterTopChange("wood_island"); onViewModeChange?.("interior"); }}
           />
         </div>
       </section>
@@ -424,6 +418,12 @@ const RightPanel = ({
             selected={config.deckSelection===true}
             onClick={()=>onDeckChange(!config.deckSelection)}
           />
+          <OptionCard
+                      title="The Bigger Deck"
+                      subtitle=""
+                      selected={false}
+                      onClick={() => {}}
+                    />
         </div>
       </section>
 
@@ -438,23 +438,23 @@ const RightPanel = ({
 
         <div className="flex flex-col gap-4">
           <OptionCard
-            title="Journey Couch & Stools"
+            title="Journey Couch, Coffee Table & Stools (2) "
             subtitle="Designed in collaboration with Mitz Takahashi"
             selected={config.couchSelection === true}
-            onClick={() => onCouchChange(!config.couchSelection)}
+            onClick={() => { onCouchChange(!config.couchSelection); onViewModeChange?.("interior"); }}
           />
           <OptionCard
             title="Custom Base Lighting"
             subtitle="Wall sconces and island light – Produced by Hamster Lighting"
             selected={config.customLighting === true}
-            onClick={() => onLightingChange(!config.customLighting)}
+            onClick={() => { onLightingChange(!config.customLighting); onViewModeChange?.("interior"); }}
           />
           {isBasePlus && (
             <OptionCard
               title="Built-in wardrobe (Base 1+ only)"
               subtitle='16" panels - Raised joint - Hidden fasteners'
               selected={config.wardrobeSelection === true}
-              onClick={() => onWardrobeChange(!config.wardrobeSelection)}
+              onClick={() => { onWardrobeChange(!config.wardrobeSelection); onViewModeChange?.("interior"); }}
             />
           )}
         </div>
