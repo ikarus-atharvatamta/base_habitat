@@ -26,8 +26,8 @@ const Layout = () => {
   const [toneMappingExposure, setToneMappingExposure] = useState(0.7);
   
   // Add-ons state
-  const [couchSelection, setCouchSelection] = useState(false);
-  const [customLighting, setCustomLighting] = useState(false);
+  const [couchSelection, setCouchSelection] = useState(true);
+  const [customLighting, setCustomLighting] = useState(true);
   const [wardrobeSelection, setWardrobeSelection] = useState(false);
   const [lightSettings, setLightSettings] = useState({});
   const [activeLightControls, setActiveLightControls] = useState([]);
@@ -119,7 +119,15 @@ const Layout = () => {
     if (selectedLayoutParam) setSelectedLayout(selectedLayoutParam);
     
     const deckSelectionParam = params.get('deckSelection');
-    if (deckSelectionParam !== null) setDeckSelection(deckSelectionParam === 'true');
+    if (deckSelectionParam !== null) {
+      if (deckSelectionParam === 'true') {
+        setDeckSelection('base');
+      } else if (deckSelectionParam === 'false') {
+        setDeckSelection(false);
+      } else {
+        setDeckSelection(deckSelectionParam);
+      }
+    }
     
     const selectedCounterTopParam = params.get('selectedCounterTop');
     if (selectedCounterTopParam) setSelectedCounterTop(selectedCounterTopParam);

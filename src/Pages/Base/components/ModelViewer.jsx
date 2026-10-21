@@ -231,6 +231,9 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
           } else if (fileName === "Mezzanine King.glb" && (child.name === "Point005" || child.name === "Point006")) {
             defaultMultiplier = 0.05;
             defaultColor = "#965027";
+          } else if (fileName === "Sofa.glb" && (child.name === "Spot002" || child.name === "Spot.002")) {
+            defaultMultiplier = 0.01;
+            defaultColor = "#965027";
           } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb") {
             if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
               defaultMultiplier = 0.1;
@@ -370,6 +373,9 @@ function Model({ url, visible = true, onLoaded, lightSettings, activeLightContro
           } else if (fileName === "Mezzanine King.glb" && (child.name === "Point005" || child.name === "Point006")) {
             defaultMultiplier = 0.05;
             defaultColor = "#965027";
+          } else if (fileName === "Sofa.glb" && (child.name === "Spot002" || child.name === "Spot.002")) {
+            defaultMultiplier = 0.01;
+            defaultColor = "#965027";
           } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb") {
             if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
               defaultMultiplier = 0.1;
@@ -460,6 +466,8 @@ const MODEL_URLS = {
   kitchen: `${import.meta.env.BASE_URL}base/models/model-7oct26/Kitchen.glb`,
   cabinetDoor: `${import.meta.env.BASE_URL}base/models/model-7oct26/Kitchen_Cabinet_Door.glb`,
   deck: `${import.meta.env.BASE_URL}base/models/model-7oct26/Deck.glb`,
+  biggerDeck: `${import.meta.env.BASE_URL}base/models/model-7oct26/Bigger Deck.glb`,
+  sofa: `${import.meta.env.BASE_URL}base/models/model-7oct26/Sofa.glb`,
   countertop: {
     stainless_steel: `${import.meta.env.BASE_URL}base/models/model-7oct26/CounterTopSteel.glb`,
     wood_island: `${import.meta.env.BASE_URL}base/models/model-7oct26/CounterTopWood.glb`,
@@ -621,8 +629,33 @@ const SceneContent = ({
             activeLightControls={config.activeLightControls}
           />
         )}
-        {config.deckSelection === true && (
-          <Model url={MODEL_URLS.deck} onLoaded={enableShadows} lightSettings={config.lightSettings} activeLightControls={config.activeLightControls} />
+        {config.couchSelection === true && (
+          <Model
+            key="sofa"
+            url={MODEL_URLS.sofa}
+            visible={true}
+            onLoaded={enableShadows}
+            lightSettings={config.lightSettings}
+            activeLightControls={config.activeLightControls}
+          />
+        )}
+        {(config.deckSelection === true || config.deckSelection === "base") && (
+          <Model
+            key="base-deck"
+            url={MODEL_URLS.deck}
+            onLoaded={enableShadows}
+            lightSettings={config.lightSettings}
+            activeLightControls={config.activeLightControls}
+          />
+        )}
+        {config.deckSelection === "bigger" && (
+          <Model
+            key="bigger-deck"
+            url={MODEL_URLS.biggerDeck}
+            onLoaded={enableShadows}
+            lightSettings={config.lightSettings}
+            activeLightControls={config.activeLightControls}
+          />
         )}
         <Model
           key={windowUrl}
@@ -767,6 +800,8 @@ Object.values(MODEL_URLS.bed).forEach((url) => useGLTF.preload(url));
 useGLTF.preload(MODEL_URLS.kitchen);
 useGLTF.preload(MODEL_URLS.cabinetDoor);
 useGLTF.preload(MODEL_URLS.deck);
+useGLTF.preload(MODEL_URLS.biggerDeck);
+useGLTF.preload(MODEL_URLS.sofa);
 Object.values(MODEL_URLS.countertop).forEach((url) => useGLTF.preload(url));
 
 export default ModelViewer;

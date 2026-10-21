@@ -421,14 +421,14 @@ const RightPanel = ({
           <OptionCard
             title="Base Deck"
             subtitle='1/2" Corugaled steel - Exposed fasteners'
-            selected={config.deckSelection===true}
-            onClick={()=>onDeckChange(!config.deckSelection)}
+            selected={config.deckSelection === true || config.deckSelection === "base"}
+            onClick={() => onDeckChange(config.deckSelection === true || config.deckSelection === "base" ? false : "base")}
           />
           <OptionCard
             title="The Bigger Deck"
             subtitle=""
-            selected={false}
-            onClick={() => {}}
+            selected={config.deckSelection === "bigger"}
+            onClick={() => onDeckChange(config.deckSelection === "bigger" ? false : "bigger")}
           />
         </div>
       </section>
