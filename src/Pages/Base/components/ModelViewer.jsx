@@ -18,6 +18,14 @@ import {
   ContactShadows,
 } from "@react-three/drei";
 import * as THREE from "three";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import {
+  isMobileDevice,
+  optimizeModelForMobile,
+  disposeClonedScene,
+  disposeSceneHierarchy,
+  clearModelCache,
+} from "../../../utils/mobileOptimization";
 
 const VIEWPOINTS_AZIMUTH = [
   Math.PI * 0.25, // 45 deg
@@ -57,26 +65,30 @@ function LoadingOverlay() {
 
 const ToneMappingUpdater = ({ toneMapping, toneMappingExposure, activeLightControls }) => {
   const { gl, scene } = useThree();
+  const prevToneMapping = useRef(gl.toneMapping);
   
   useEffect(() => {
     const isAnyControlActive = activeLightControls && activeLightControls.length > 0;
+    const targetToneMapping = isAnyControlActive ? toneMapping : THREE.AgXToneMapping;
     
-    // Only apply custom tone mapping if a light control is active. Otherwise revert to defaults.
-    gl.toneMapping = isAnyControlActive ? toneMapping : THREE.AgXToneMapping;
+    // Only re-traverse and recompile materials if the tone mapping algorithm changed
+    if (gl.toneMapping !== targetToneMapping) {
+      gl.toneMapping = targetToneMapping;
+      prevToneMapping.current = targetToneMapping;
+      scene.traverse((child) => {
+        if (child.isMesh && child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m.needsUpdate = true);
+          } else {
+            child.material.needsUpdate = true;
+          }
+        }
+      });
+    }
     
     if (toneMappingExposure !== undefined) {
       gl.toneMappingExposure = isAnyControlActive ? toneMappingExposure : 0.7;
     }
-    
-    scene.traverse((child) => {
-      if (child.isMesh && child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach(m => m.needsUpdate = true);
-        } else {
-          child.material.needsUpdate = true;
-        }
-      }
-    });
   }, [toneMapping, toneMappingExposure, gl, scene, activeLightControls]);
   
   return null;
@@ -200,6 +212,7 @@ function CameraHandler({
 function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLightControls }) {
   const { scene } = useGLTF(url);
   const cloned = useMemo(() => scene.clone(true), [scene]);
+  const isMobile = useMemo(() => isMobileDevice(), []);
   const groupRef = useRef();
   const [shouldRender, setShouldRender] = useState(visible);
   
@@ -207,8 +220,14 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
   const isActive = activeLightControls?.includes(fileName);
 
   useEffect(() => {
-    if (cloned && onLoaded) onLoaded(cloned);
-  }, [cloned, onLoaded]);
+    if (cloned) {
+      optimizeModelForMobile(cloned, isMobile);
+      if (onLoaded) onLoaded(cloned);
+    }
+    return () => {
+      disposeClonedScene(cloned);
+    };
+  }, [cloned, onLoaded, isMobile]);
 
   useEffect(() => {
     if (cloned) {
@@ -259,13 +278,6 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
           }
           
           const lightId = child.name || child.uuid;
-          
-          console.log(`[DEBUG] Processing light in ${fileName}:`, {
-            id: lightId,
-            name: child.name,
-            defaultMultiplier,
-            defaultColor,
-          });
 
           lightsInfo.push({
             id: lightId,
@@ -286,6 +298,9 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
           } else {
             child.intensity = child.userData.originalIntensity * defaultMultiplier;
           }
+
+          // Disable inactive lights so mobile WebGL forward shaders don't compute dead lights
+          child.visible = child.intensity > 0.0001;
           
           if (isActive && userColor) {
             child.color.set(userColor);
@@ -345,9 +360,17 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
 function Model({ url, visible = true, onLoaded, lightSettings, activeLightControls }) {
   const { scene } = useGLTF(url);
   const cloned = useMemo(() => scene.clone(true), [scene]);
+  const isMobile = useMemo(() => isMobileDevice(), []);
+  
   useEffect(() => {
-    if (cloned && onLoaded) onLoaded(cloned);
-  }, [cloned, onLoaded]);
+    if (cloned) {
+      optimizeModelForMobile(cloned, isMobile);
+      if (onLoaded) onLoaded(cloned);
+    }
+    return () => {
+      disposeClonedScene(cloned);
+    };
+  }, [cloned, onLoaded, isMobile]);
   
   const fileName = url.split('/').pop();
   const isActive = activeLightControls?.includes(fileName);
@@ -420,6 +443,9 @@ function Model({ url, visible = true, onLoaded, lightSettings, activeLightContro
           } else {
             child.intensity = child.userData.originalIntensity * defaultMultiplier;
           }
+
+          // Disable inactive lights so mobile WebGL forward shaders don't compute dead lights
+          child.visible = child.intensity > 0.0001;
           
           if (isActive && userColor) {
             child.color.set(userColor);
@@ -504,33 +530,23 @@ const SceneContent = ({
   const counterTopUrl = MODEL_URLS.countertop[config.selectedCounterTop] || MODEL_URLS.countertop.stainless_steel;
   const windowUrl = MODEL_URLS.window[config.windowMaterial] || MODEL_URLS.window["wood-pvc"];
   // console.log("[SceneContent] selectedCounterTop =", config.selectedCounterTop, "→ url =", counterTopUrl);
-  // Step 1: On model load, measure, cache size, and enable casting shadows on all meshes.
+  const isMobile = useMemo(() => isMobileDevice(), []);
+  
+  // Step 1: On model load, measure, cache size, and optimize meshes/textures.
   const handleModelLoaded = useMemo(
     () => (scene) => {
       const box = new THREE.Box3().setFromObject(scene);
       const sizeBox = box.getSize(new THREE.Vector3());
       onHeightChange(sizeBox.y);
       onModelMaxSizeChange(Math.max(sizeBox.x, sizeBox.y, sizeBox.z));
-      scene.traverse((child) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          // child.position.y += 0.002;
-        }
-      });
+      optimizeModelForMobile(scene, isMobile);
     },
-    [onHeightChange, onModelMaxSizeChange],
+    [onHeightChange, onModelMaxSizeChange, isMobile],
   );
 
   const enableShadows = useCallback((scene) => {
-    scene.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        // child.position.y += 0.02;
-      }
-    });
-  }, []);
+    optimizeModelForMobile(scene, isMobile);
+  }, [isMobile]);
 
   // Step 2: Recalculate distance whenever canvas size OR cached model size changes.
   const readyCalled = useRef(false);
@@ -572,9 +588,38 @@ const SceneContent = ({
     viewMode,
   ]);
 
+  const exportGroupRef = useRef();
+
+  useEffect(() => {
+    window.__EXPORT_SCENE__ = async (filename) => {
+      if (!exportGroupRef.current) {
+        throw new Error("3D model is not ready yet.");
+      }
+      const exporter = new GLTFExporter();
+      const glb = await exporter.parseAsync(exportGroupRef.current, {
+        binary: true,
+        onlyVisible: true,
+        embedImages: true,
+      });
+      const blob = new Blob([glb], { type: "model/gltf-binary" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename || "Base_1_Configured.glb";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
+    return () => {
+      delete window.__EXPORT_SCENE__;
+    };
+  }, []);
+
   return (
     <Suspense fallback={null}>
-      {/* <group rotation={[0, Math.PI / 6, 0]}> */}
+      <group ref={exportGroupRef}>
       <Center key="main-center">
         {/* Base structure — dynamically loads based on viewMode and color */}
         <Model 
@@ -665,16 +710,18 @@ const SceneContent = ({
           activeLightControls={config.activeLightControls}
         />
       </Center>
-      {/* </group> */}
+      </group>
 
       <ContactShadows
+        key={`shadow-${viewMode}-${config.selectedBed}-${config.couchSelection}-${config.deckSelection}`}
         position={[0, -modelHeight / 2 -0.16, 0]}
         opacity={0.35}
         scale={60}
-        blur={2.5}
+        blur={isMobile ? 1.5 : 2.5}
         far={modelHeight * 2 || 10}
         color="#000000"
-        // scale={50}
+        resolution={isMobile ? 256 : 512}
+        frames={isMobile ? 1 : Infinity}
       />
 
       <Environment
@@ -685,6 +732,32 @@ const SceneContent = ({
     </Suspense>
   );
 };
+
+function CanvasContextDisposer({ modelUrls }) {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    const doCleanup = () => {
+      disposeSceneHierarchy(scene);
+      clearModelCache(modelUrls);
+      try {
+        gl.renderLists?.dispose?.();
+        gl.dispose();
+      } catch (err) {
+        console.warn("WebGL dispose error:", err);
+      }
+    };
+
+    window.__CLEANUP_CURRENT_SCENE__ = doCleanup;
+
+    return () => {
+      doCleanup();
+      if (window.__CLEANUP_CURRENT_SCENE__ === doCleanup) {
+        delete window.__CLEANUP_CURRENT_SCENE__;
+      }
+    };
+  }, [gl, scene, modelUrls]);
+  return null;
+}
 
 const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
   const cameraRef = useRef();
@@ -722,6 +795,16 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
     setRoofVisible(false);
   }, []);
 
+  const isMobile = useMemo(() => isMobileDevice(), []);
+  const [canRenderCanvas, setCanRenderCanvas] = useState(!isMobile);
+
+  useEffect(() => {
+    if (isMobile) {
+      const timer = setTimeout(() => setCanRenderCanvas(true), 120);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile]);
+
   return (
     <div className="relative w-full h-full">
       {/* Loader shown while GLB is fetching, outside Canvas so it's always visible */}
@@ -731,77 +814,91 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
       <div
         className="w-full h-full cursor-grab active:cursor-grabbing"
         style={{
-          opacity: modelReady ? 1 : 0,
+          opacity: modelReady && canRenderCanvas ? 1 : 0,
           transition: modelReady ? "opacity 0.75s ease-in" : "none",
         }}
       >
-        <Canvas shadows dpr={[1, 2]} 
-        gl={{ 
-          toneMapping: config.toneMapping !== undefined ? parseInt(config.toneMapping) : THREE.AgXToneMapping, }}
+        {canRenderCanvas ? (
+          <Canvas 
+            shadows={!isMobile} 
+            // dpr={isMobile ? 1 : [1, 1.5]} 
+            gl={{ 
+              powerPreference: "high-performance",
+              antialias: !isMobile,
+              precision: isMobile ? "mediump" : "highp",
+              toneMapping: config.toneMapping !== undefined ? parseInt(config.toneMapping) : THREE.AgXToneMapping, 
+            }}
+            onCreated={({ gl }) => {
+              gl.domElement.addEventListener("webglcontextlost", (event) => {
+                event.preventDefault();
+                console.warn("WebGL context lost on mobile, attempting recovery...");
+              });
+            }}
+          >
+            <CanvasContextDisposer modelUrls={MODEL_URLS} />
+            {/* <Stage> */}
+            <ToneMappingUpdater 
+              toneMapping={config.toneMapping !== undefined ? parseInt(config.toneMapping) : THREE.AgXToneMapping} 
+              toneMappingExposure={config.toneMappingExposure !== undefined ? parseFloat(config.toneMappingExposure) : 0.7}
+              activeLightControls={config.activeLightControls}
+            />
+            <PerspectiveCamera
+              makeDefault
+              ref={cameraRef}
+              fov={17}    
+              near={.5}
+              far={100}
+            />
 
-        >
-          {/* <Stage> */}
-          <ToneMappingUpdater 
-            toneMapping={config.toneMapping !== undefined ? parseInt(config.toneMapping) : THREE.AgXToneMapping} 
-            toneMappingExposure={config.toneMappingExposure !== undefined ? parseFloat(config.toneMappingExposure) : 0.7}
-            activeLightControls={config.activeLightControls}
-          />
-          <PerspectiveCamera
-            makeDefault
-            ref={cameraRef}
-            fov={17}    
-            near={.5}
-            far={100}
-          />
+            <ambientLight intensity={0.7} />
+             
+            {/* <directionalLight
+              position={[10, 25, 10]}
+              intensity={1.2}
+              castShadow
+              shadow-mapSize={2048}
+            /> */}
+            {/* <pointLight position={[-15, 15, -15]} intensity={0.5} /> */}
 
-           <ambientLight intensity={0.7} />
-           
-            
-          
-          {/* <directionalLight
-            position={[10, 25, 10]}
-            intensity={1.2}
-            castShadow
-            shadow-mapSize={2048}
-          /> */}
-          {/* <pointLight position={[-15, 15, -15]} intensity={0.5} /> */}
+            <SceneContent
+              viewMode={viewMode}
+              config={config}
+              onHeightChange={handleHeightChange}
+              onDistanceChange={setCameraDistance}
+              onModelMaxSizeChange={handleMaxSizeChange}
+              modelMaxSize={modelMaxSize}
+              cameraRef={cameraRef}
+              modelHeight={modelHeight}
+              onReady={handleReady}
+              roofVisible={roofVisible}
+            />
 
-          <SceneContent
-            viewMode={viewMode}
-            config={config}
-            onHeightChange={handleHeightChange}
-            onDistanceChange={setCameraDistance}
-            onModelMaxSizeChange={handleMaxSizeChange}
-            modelMaxSize={modelMaxSize}
-            cameraRef={cameraRef}
-            modelHeight={modelHeight}
-            onReady={handleReady}
-            roofVisible={roofVisible}
-          />
-
-          <CameraHandler
-            viewIndex={viewIndex}
-            viewMode={viewMode}
-            distance={cameraDistance}
-            onCameraOverhead={handleCameraOverhead}
-          />
-        </Canvas>
+            <CameraHandler
+              viewIndex={viewIndex}
+              viewMode={viewMode}
+              distance={cameraDistance}
+              onCameraOverhead={handleCameraOverhead}
+            />
+          </Canvas>
+        ) : null}
       </div>
     </div>
   );
 };
 
-// Preload all models for instant switching
-Object.values(MODEL_URLS.base_int).forEach((url) => useGLTF.preload(url));
-Object.values(MODEL_URLS.base_ext).forEach((url) => useGLTF.preload(url));
+// Preload all models for instant switching ONLY on desktop to prevent mobile VRAM exhaustion and crashes
+if (!isMobileDevice()) {
+  Object.values(MODEL_URLS.base_int).forEach((url) => useGLTF.preload(url));
+  Object.values(MODEL_URLS.base_ext).forEach((url) => useGLTF.preload(url));
 
-Object.values(MODEL_URLS.roof).forEach((url) => useGLTF.preload(url));
-Object.values(MODEL_URLS.bed).forEach((url) => useGLTF.preload(url));
-useGLTF.preload(MODEL_URLS.kitchen);
-useGLTF.preload(MODEL_URLS.cabinetDoor);
-useGLTF.preload(MODEL_URLS.deck);
-useGLTF.preload(MODEL_URLS.biggerDeck);
-useGLTF.preload(MODEL_URLS.sofa);
-Object.values(MODEL_URLS.countertop).forEach((url) => useGLTF.preload(url));
+  Object.values(MODEL_URLS.roof).forEach((url) => useGLTF.preload(url));
+  Object.values(MODEL_URLS.bed).forEach((url) => useGLTF.preload(url));
+  useGLTF.preload(MODEL_URLS.kitchen);
+  useGLTF.preload(MODEL_URLS.cabinetDoor);
+  useGLTF.preload(MODEL_URLS.deck);
+  useGLTF.preload(MODEL_URLS.biggerDeck);
+  useGLTF.preload(MODEL_URLS.sofa);
+  Object.values(MODEL_URLS.countertop).forEach((url) => useGLTF.preload(url));
+}
 
 export default ModelViewer;

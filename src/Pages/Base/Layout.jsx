@@ -172,6 +172,27 @@ const Layout = () => {
       });
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownloadScene = async () => {
+    if (isExporting) return;
+    if (!window.__EXPORT_SCENE__) {
+      toast.error("3D Model is still loading. Please try again in a moment.");
+      return;
+    }
+    setIsExporting(true);
+    const toastId = toast.loading("Preparing 3D model export (.glb)...");
+    try {
+      await window.__EXPORT_SCENE__("Base_1_Configured.glb");
+      toast.success("Scene downloaded successfully!", { id: toastId });
+    } catch (err) {
+      console.error("Export error: ", err);
+      toast.error("Failed to export 3D scene.", { id: toastId });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const nextView = () => setViewIndex((prev) => (prev + 1) % 4); // ?
   const prevView = () => setViewIndex((prev) => (prev - 1 + 4) % 4);
 
@@ -295,6 +316,8 @@ const Layout = () => {
               activeLightControls={activeLightControls}
               availableLights={availableLights}
               onCopyConfig={handleCopyLink}
+              onDownloadScene={handleDownloadScene}
+              isExporting={isExporting}
               onToneMappingChange={setToneMapping}
               onToneMappingExposureChange={setToneMappingExposure}
               onViewModeChange={setViewMode}
@@ -323,6 +346,8 @@ const Layout = () => {
             activeLightControls={activeLightControls}
             availableLights={availableLights}
             onCopyConfig={handleCopyLink}
+            onDownloadScene={handleDownloadScene}
+            isExporting={isExporting}
             onToneMappingChange={setToneMapping}
             onToneMappingExposureChange={setToneMappingExposure}
             onViewModeChange={setViewMode}

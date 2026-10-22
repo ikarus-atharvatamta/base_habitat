@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import LayoutSection from "./LayoutSection";
 import ColorSwatchSection from "./ColorSwatchSection";
 import OptionCard from "./OptionCard";
+import { Download } from "lucide-react";
 
 export const TitleSection = ({ className = "" }) => (
   <section className={`flex flex-col gap-6 ${className}`}>
@@ -37,6 +38,8 @@ const RightPanel = ({
   activeLightControls,
   availableLights,
   onCopyConfig,
+  onDownloadScene,
+  isExporting,
   onToneMappingChange,
   onToneMappingExposureChange,
   onViewModeChange
@@ -44,6 +47,17 @@ const RightPanel = ({
   const location = useLocation();
   const navigate = useNavigate();
   const isBasePlus = location.pathname === "/basehabitat/plus";
+
+  const handleModelSwitch = (path) => {
+    if (location.pathname === path) return;
+    // Explicitly purge active 3D memory first before navigating to the other model
+    if (typeof window !== "undefined" && window.__CLEANUP_CURRENT_SCENE__) {
+      window.__CLEANUP_CURRENT_SCENE__();
+    }
+    setTimeout(() => {
+      navigate(path);
+    }, 150);
+  };
 
   return (
     <div className=" px-10 pt-[36px] pb-12 md:px-[15%] xl:px-[27.5%] md:pt-[80px] md:pb-16 flex flex-col gap-12 w-full mx-auto">
@@ -68,7 +82,7 @@ const RightPanel = ({
           title="Base 1"
           subtitle="Studio - 1 Bed, 1 Bathroom, 1 Sleeping Loft 1 Sleeping Loft – 960 sq ft"
           selected={!isBasePlus}
-          onClick={() => navigate("/basehabitat")}
+          onClick={() => handleModelSwitch("/basehabitat")}
         >
           <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
             See website
@@ -78,7 +92,7 @@ const RightPanel = ({
           title="Base 1+"
           subtitle="Studio - 1 Bed, 1 Bathroom, 1-2 Bed, 1 Sleeping loft 1-2 Bed, 1 Sleeping loft – 1200 sq ft"
           selected={isBasePlus}
-          onClick={() => navigate("/basehabitat/plus")}
+          onClick={() => handleModelSwitch("/basehabitat/plus")}
         >
           <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
             See website
@@ -464,6 +478,16 @@ const RightPanel = ({
             />
           )}
 
+          <button
+            type="button"
+            onClick={onDownloadScene}
+            disabled={isExporting}
+            className="w-full mt-2 flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-2xl border border-charcoal/20 bg-white hover:bg-black/5 active:scale-[0.99] text-charcoal font-medium text-[15px] transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download size={18} className={isExporting ? "animate-bounce" : ""} />
+            <span>{isExporting ? "Exporting 3D Scene..." : "Download Current Scene (.glb)"}</span>
+          </button>
+
           {activeLightControls && activeLightControls.length > 0 && (
             <div className="flex flex-col gap-4 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
               <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
@@ -635,15 +659,17 @@ const RightPanel = ({
               Need a break?
             </h4>
             <p className="text-sm text-subtext-gray leading-relaxed font-normal">
-              Save your configuration link and come back at any time.
+              Save your configuration link or download your 3D model.
             </p>
-            <a 
-              href="#" 
-              onClick={(e) => { e.preventDefault(); onCopyConfig(); }}
-              className="text-sm text-charcoal underline hover:text-[#e54d42] font-normal transition-colors"
-            >
-              Copy configuration link
-            </a>
+            <div className="flex flex-col gap-1.5 items-start">
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); onCopyConfig(); }}
+                className="text-sm text-charcoal underline hover:text-[#e54d42] font-normal transition-colors"
+              >
+                Copy configuration link
+              </a>
+            </div>
           </div>
 
           {/* Have questions */}

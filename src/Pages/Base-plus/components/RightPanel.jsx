@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import LayoutSection from "./LayoutSection";
 import ColorSwatchSection from "./ColorSwatchSection";
 import OptionCard from "./OptionCard";
+import { Download } from "lucide-react";
 
 export const TitleSection = ({ className = "" }) => (
   <section className={`flex flex-col gap-6 ${className}`}>
@@ -32,12 +33,31 @@ const RightPanel = ({
   onCouchChange,
   onLightingChange,
   onWardrobeChange,
+  lightSettings,
+  setLightSettings,
+  activeLightControls,
+  availableLights,
   onCopyConfig,
+  onDownloadScene,
+  isExporting,
+  onToneMappingChange,
+  onToneMappingExposureChange,
   onViewModeChange
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const isBasePlus = location.pathname === "/basehabitat/plus";
+  const isBasePlus = true;
+
+  const handleModelSwitch = (path) => {
+    if (location.pathname === path) return;
+    // Explicitly purge active 3D memory first before navigating to the other model
+    if (typeof window !== "undefined" && window.__CLEANUP_CURRENT_SCENE__) {
+      window.__CLEANUP_CURRENT_SCENE__();
+    }
+    setTimeout(() => {
+      navigate(path);
+    }, 150);
+  };
 
   return (
     <div className=" px-10 pt-[36px] pb-12 md:px-[15%] xl:px-[27.5%] md:pt-[80px] md:pb-16 flex flex-col gap-12 w-full mx-auto">
@@ -62,7 +82,7 @@ const RightPanel = ({
           title="Base 1"
           subtitle="Studio - 1 Bed, 1 Bathroom - 1 Sleeping Loft – 960 sq ft"
           selected={!isBasePlus}
-          onClick={() => navigate("/basehabitat")}
+          onClick={() => handleModelSwitch("/basehabitat")}
         >
           <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
             See website
@@ -72,7 +92,7 @@ const RightPanel = ({
           title="Base 1+"
           subtitle="Studio - 1 Bed, 1 Bathroom, 1-2 Bed, 1 Sleeping loft 1-2 Bed, 1 Sleeping loft – 1200 sq ft"
           selected={isBasePlus}
-          onClick={() => navigate("/basehabitat/plus")}
+          onClick={() => handleModelSwitch("/basehabitat/plus")}
         >
           <a href="https://basehabitation.com/en/" target="_blank" rel="noreferrer" className="text-sm underline underline-offset-2 hover:text-charcoal/80" onClick={(e) => e.stopPropagation()}>
             See website
@@ -415,15 +435,15 @@ const RightPanel = ({
           <OptionCard
             title="Base Deck +"
             subtitle='36" panels - Raised joint -Hidden fasteners'
-            selected={config.deckSelection===true}
-            onClick={()=>onDeckChange(!config.deckSelection)}
+            selected={config.deckSelection === true || config.deckSelection === "base"}
+            onClick={() => onDeckChange(config.deckSelection === true || config.deckSelection === "base" ? false : "base")}
           />
           <OptionCard
-                      title="The Bigger Deck"
-                      subtitle=""
-                      selected={false}
-                      onClick={() => {}}
-                    />
+            title="The Bigger Deck +"
+            subtitle=""
+            selected={config.deckSelection === "bigger"}
+            onClick={() => onDeckChange(config.deckSelection === "bigger" ? false : "bigger")}
+          />
         </div>
       </section>
 
@@ -457,6 +477,169 @@ const RightPanel = ({
               onClick={() => { onWardrobeChange(!config.wardrobeSelection); onViewModeChange?.("interior"); }}
             />
           )}
+
+          <button
+            type="button"
+            onClick={onDownloadScene}
+            disabled={isExporting}
+            className="w-full mt-2 flex items-center justify-center gap-2.5 py-3.5 px-5 rounded-2xl border border-charcoal/20 bg-white hover:bg-black/5 active:scale-[0.99] text-charcoal font-medium text-[15px] transition-all cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download size={18} className={isExporting ? "animate-bounce" : ""} />
+            <span>{isExporting ? "Exporting 3D Scene..." : "Download Current Scene (.glb)"}</span>
+          </button>
+
+          {activeLightControls && activeLightControls.length > 0 && (
+            <div className="flex flex-col gap-4 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
+              <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
+                Global Renderer Settings
+              </h3>
+              <div className="flex flex-col gap-2">
+                <label className="text-[14px] font-normal tracking-tight text-charcoal">Tone Mapping</label>
+                <select 
+                  value={config.toneMapping ?? 0} 
+                  onChange={(e) => onToneMappingChange?.(parseInt(e.target.value))}
+                  className="p-2 border border-black/10 rounded-lg bg-white outline-none focus:border-black/30"
+                >
+                  <option value={0}>No Tone Mapping</option>
+                  <option value={1}>Linear</option>
+                  <option value={2}>Reinhard</option>
+                  <option value={3}>Cineon</option>
+                  <option value={4}>ACES Filmic</option>
+                  <option value={6}>AgX</option>
+                  <option value={7}>Neutral</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2 mt-2">
+                <div className="flex justify-between text-xs text-subtext-gray items-center">
+                  <label className="text-[14px] font-normal tracking-tight text-charcoal">Exposure</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={config.toneMappingExposure ?? 1.0}
+                    onChange={(e) => onToneMappingExposureChange?.(parseFloat(e.target.value) || 0)}
+                    className="w-16 p-1 border border-black/10 rounded text-right bg-white text-charcoal outline-none focus:border-black/30"
+                  />
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="5" 
+                  step="0.05" 
+                  value={config.toneMappingExposure ?? 1.0} 
+                  onChange={(e) => onToneMappingExposureChange?.(parseFloat(e.target.value) || 0)}
+                  className="w-full accent-[#e54d42]"
+                />
+                {config.toneMapping === 0 && (
+                  <span className="text-[10px] text-[#e54d42] leading-tight mt-1">
+                    * Exposure has no effect when "No Tone Mapping" is selected. Please select a tone mapping algorithm above.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeLightControls && activeLightControls.length > 0 && activeLightControls.map(modelName => {
+            const lightsInfo = availableLights?.[modelName];
+            if (!lightsInfo || lightsInfo.length === 0) {
+              return (
+                <div key={`light-controls-${modelName}`} className="flex flex-col gap-4 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
+                  <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
+                    {modelName}
+                  </h3>
+                  <p className="text-sm text-subtext-gray">No lights found in this model.</p>
+                </div>
+              );
+            }
+
+            return (
+              <div key={`light-controls-${modelName}`} className="flex flex-col gap-6 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
+                <h3 className="text-[18px] font-medium tracking-tight text-charcoal">
+                  {modelName} Light Controls
+                </h3>
+                
+                {lightsInfo.map((light, index) => {
+                  const intensityVal = lightSettings?.[modelName]?.[light.id]?.intensity ?? (light.defaultMultiplier !== undefined ? light.defaultMultiplier : 1);
+                  const colorVal = lightSettings?.[modelName]?.[light.id]?.color ?? light.defaultColor;
+
+                  console.log(`[DEBUG] UI Slider for ${modelName} -> ${light.name}:`, {
+                    intensityVal, 
+                    colorVal, 
+                    defaultMultiplier: light.defaultMultiplier, 
+                    defaultColor: light.defaultColor,
+                    lightSettingsForId: lightSettings?.[modelName]?.[light.id]
+                  });
+                  const rangeVal = lightSettings?.[modelName]?.[light.id]?.range ?? light.defaultDistance;
+
+                  return (
+                    <div key={light.id} className="flex flex-col gap-3 p-3 border rounded-lg border-black/5 bg-white">
+                      <h4 className="text-[15px] font-medium tracking-tight text-charcoal">
+                        {light.name} <span className="text-xs text-subtext-gray font-normal">({light.type})</span>
+                      </h4>
+                      
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between text-xs text-subtext-gray items-center">
+                          <span>Intensity</span>
+                          <input 
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={intensityVal}
+                            onChange={(e) => setLightSettings(prev => ({
+                              ...prev,
+                              [modelName]: {
+                                ...(prev[modelName] || {}),
+                                [light.id]: { 
+                                  ...(prev[modelName]?.[light.id] || {}), 
+                                  intensity: parseFloat(e.target.value) || 0 
+                                }
+                              }
+                            }))}
+                            className="w-16 p-1 border border-black/10 rounded text-right bg-white text-charcoal outline-none focus:border-black/30"
+                          />
+                        </div>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="10" 
+                          step="0.1" 
+                          value={intensityVal} 
+                          onChange={(e) => setLightSettings(prev => ({
+                            ...prev,
+                            [modelName]: {
+                              ...(prev[modelName] || {}),
+                              [light.id]: { ...(prev[modelName]?.[light.id] || {}), intensity: parseFloat(e.target.value) }
+                            }
+                          }))}
+                          className="w-full accent-[#e54d42]"
+                        />
+                      </div>
+
+
+
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[14px] font-normal tracking-tight text-charcoal">
+                          Color
+                        </span>
+                        <input 
+                          type="color" 
+                          value={colorVal} 
+                          onChange={(e) => setLightSettings(prev => ({
+                            ...prev,
+                            [modelName]: {
+                              ...(prev[modelName] || {}),
+                              [light.id]: { ...(prev[modelName]?.[light.id] || {}), color: e.target.value }
+                            }
+                          }))}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -476,15 +659,18 @@ const RightPanel = ({
               Need a break?
             </h4>
             <p className="text-sm text-subtext-gray leading-relaxed font-normal">
-              Save your configuration link and come back at any time.
+              Save your configuration link or download your 3D model.
             </p>
-            <a 
-              href="#" 
-              onClick={(e) => { e.preventDefault(); onCopyConfig(); }}
-              className="text-sm text-charcoal underline hover:text-[#e54d42] font-normal transition-colors"
-            >
-              Copy configuration link
-            </a>
+            <div className="flex flex-col gap-1.5 items-start">
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); onCopyConfig(); }}
+                className="text-sm text-charcoal underline hover:text-[#e54d42] font-normal transition-colors"
+              >
+                Copy configuration link
+              </a>
+              
+            </div>
           </div>
 
           {/* Have questions */}
