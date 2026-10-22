@@ -244,16 +244,16 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
           let defaultMultiplier = 1.0;
           let defaultColor = child.userData.originalColor;
 
-          if (fileName === "Mezzanine Bunk.glb" && (child.name === "Point003" || child.name === "Point004")) {
+          if ((fileName === "Mezzanine Bunk.glb" || fileName === "Mezzanine Bunk no light.glb") && (child.name === "Point003" || child.name === "Point004")) {
             defaultMultiplier = 0.1;
             defaultColor = "#965027";
-          } else if (fileName === "Mezzanine King.glb" && (child.name === "Point005" || child.name === "Point006")) {
+          } else if ((fileName === "Mezzanine King.glb" || fileName === "Mezzanine King no light.glb") && (child.name === "Point005" || child.name === "Point006")) {
             defaultMultiplier = 0.05;
             defaultColor = "#965027";
           } else if (fileName === "Sofa.glb" && (child.name === "Spot002" || child.name === "Spot.002")) {
             defaultMultiplier = 0.01;
             defaultColor = "#965027";
-          } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb") {
+          } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb" || fileName === "Black_Base_no light.glb" || fileName === "Light_Base_no Light.glb") {
             if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
               defaultMultiplier = 0.1;
               defaultColor = "#965027";
@@ -269,7 +269,7 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
             } else if (child.name === "Sun") {
               defaultMultiplier = 0.002;
               defaultColor = "#965027";
-            } else if (child.name === "Sun001") {
+            } else if (child.name.startsWith("Sun")) {
               defaultMultiplier = 0;
               defaultColor = "#965027";
             } else {
@@ -390,16 +390,16 @@ function Model({ url, visible = true, onLoaded, lightSettings, activeLightContro
           let defaultMultiplier = 1.0;
           let defaultColor = child.userData.originalColor;
 
-          if (fileName === "Mezzanine Bunk.glb" && (child.name === "Point003" || child.name === "Point004")) {
+          if ((fileName === "Mezzanine Bunk.glb" || fileName === "Mezzanine Bunk no light.glb") && (child.name === "Point003" || child.name === "Point004")) {
             defaultMultiplier = 0.1;
             defaultColor = "#965027";
-          } else if (fileName === "Mezzanine King.glb" && (child.name === "Point005" || child.name === "Point006")) {
+          } else if ((fileName === "Mezzanine King.glb" || fileName === "Mezzanine King no light.glb") && (child.name === "Point005" || child.name === "Point006")) {
             defaultMultiplier = 0.05;
             defaultColor = "#965027";
           } else if (fileName === "Sofa.glb" && (child.name === "Spot002" || child.name === "Spot.002")) {
             defaultMultiplier = 0.01;
             defaultColor = "#965027";
-          } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb") {
+          } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb" || fileName === "Black_Base_no light.glb" || fileName === "Light_Base_no Light.glb") {
             if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
               defaultMultiplier = 0.1;
               defaultColor = "#965027";
@@ -415,7 +415,7 @@ function Model({ url, visible = true, onLoaded, lightSettings, activeLightContro
             } else if (child.name === "Sun") {
               defaultMultiplier = 0.002;
               defaultColor = "#965027";
-            } else if (child.name === "Sun001") {
+            } else if (child.name.startsWith("Sun")) {
               defaultMultiplier = 0;
               defaultColor = "#965027";
             } else {
@@ -481,6 +481,14 @@ const MODEL_URLS = {
     dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Base.glb`,
     light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Base.glb`,
   },
+  base_ext_no_light: {
+    light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Base_no Light.glb`,
+    dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Base_no light.glb`,
+  },
+  base_int_no_light: {
+    dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Base_no light.glb`,
+    light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Base_no Light.glb`,
+  },
   roof: {
     light: `${import.meta.env.BASE_URL}base/models/model-7oct26/Light_Roof.glb`,
     dark: `${import.meta.env.BASE_URL}base/models/model-7oct26/Black_Roof.glb`,
@@ -488,6 +496,10 @@ const MODEL_URLS = {
   bed: {
     Mezzanine_king: `${import.meta.env.BASE_URL}base/models/model-7oct26/Mezzanine King.glb`,
     Mezzanine_Bunk: `${import.meta.env.BASE_URL}base/models/model-7oct26/Mezzanine Bunk.glb`,
+  },
+  bed_no_light: {
+    Mezzanine_king: `${import.meta.env.BASE_URL}base/models/model-7oct26/Mezzanine King no light.glb`,
+    Mezzanine_Bunk: `${import.meta.env.BASE_URL}base/models/model-7oct26/Mezzanine Bunk no light.glb`,
   },
   kitchen: `${import.meta.env.BASE_URL}base/models/model-7oct26/Kitchen.glb`,
   cabinetDoor: `${import.meta.env.BASE_URL}base/models/model-7oct26/Kitchen_Cabinet_Door.glb`,
@@ -519,14 +531,19 @@ const SceneContent = ({
 }) => {
   const { size, camera: threeCamera } = useThree();
 
+  const hasCustomLighting = config.customLighting !== false;
+  const baseIntSource = hasCustomLighting ? MODEL_URLS.base_int : MODEL_URLS.base_int_no_light;
+  const baseExtSource = hasCustomLighting ? MODEL_URLS.base_ext : MODEL_URLS.base_ext_no_light;
+  const bedSource = hasCustomLighting ? MODEL_URLS.bed : MODEL_URLS.bed_no_light;
+
   const baseUrl_int =
-    MODEL_URLS.base_int[config.sidingColor] || MODEL_URLS.base_int.light;
+    baseIntSource[config.sidingColor] || baseIntSource.light;
   const baseUrl_ext =
-    MODEL_URLS.base_ext[config.sidingColor] || MODEL_URLS.base_ext.light;
+    baseExtSource[config.sidingColor] || baseExtSource.light;
   const baseUrl = viewMode === "interior" ? baseUrl_int : baseUrl_ext;
   const roofUrl =
     MODEL_URLS.roof[config.roofColor] || MODEL_URLS.roof.light;
-  const bedUrl = MODEL_URLS.bed[config.selectedBed] || MODEL_URLS.bed.Mezzanine_king;
+  const bedUrl = bedSource[config.selectedBed] || bedSource.Mezzanine_king;
   const counterTopUrl = MODEL_URLS.countertop[config.selectedCounterTop] || MODEL_URLS.countertop.stainless_steel;
   const windowUrl = MODEL_URLS.window[config.windowMaterial] || MODEL_URLS.window["wood-pvc"];
   // console.log("[SceneContent] selectedCounterTop =", config.selectedCounterTop, "→ url =", counterTopUrl);
@@ -713,7 +730,7 @@ const SceneContent = ({
       </group>
 
       <ContactShadows
-        key={`shadow-${viewMode}-${config.selectedBed}-${config.couchSelection}-${config.deckSelection}`}
+        key={`shadow-${viewMode}-${config.selectedBed}-${config.couchSelection}-${config.deckSelection}-${config.customLighting}`}
         position={[0, -modelHeight / 2 -0.16, 0]}
         opacity={0.35}
         scale={60}
@@ -734,17 +751,11 @@ const SceneContent = ({
 };
 
 function CanvasContextDisposer({ modelUrls }) {
-  const { gl, scene } = useThree();
+  const { scene } = useThree();
   useEffect(() => {
     const doCleanup = () => {
       disposeSceneHierarchy(scene);
       clearModelCache(modelUrls);
-      try {
-        gl.renderLists?.dispose?.();
-        gl.dispose();
-      } catch (err) {
-        console.warn("WebGL dispose error:", err);
-      }
     };
 
     window.__CLEANUP_CURRENT_SCENE__ = doCleanup;
@@ -755,7 +766,7 @@ function CanvasContextDisposer({ modelUrls }) {
         delete window.__CLEANUP_CURRENT_SCENE__;
       }
     };
-  }, [gl, scene, modelUrls]);
+  }, [scene, modelUrls]);
   return null;
 }
 
@@ -796,14 +807,12 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
   }, []);
 
   const isMobile = useMemo(() => isMobileDevice(), []);
-  const [canRenderCanvas, setCanRenderCanvas] = useState(!isMobile);
+  const [canRenderCanvas, setCanRenderCanvas] = useState(false);
 
   useEffect(() => {
-    if (isMobile) {
-      const timer = setTimeout(() => setCanRenderCanvas(true), 120);
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile]);
+    const timer = setTimeout(() => setCanRenderCanvas(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="relative w-full h-full">
@@ -885,20 +894,5 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
     </div>
   );
 };
-
-// Preload all models for instant switching ONLY on desktop to prevent mobile VRAM exhaustion and crashes
-if (!isMobileDevice()) {
-  Object.values(MODEL_URLS.base_int).forEach((url) => useGLTF.preload(url));
-  Object.values(MODEL_URLS.base_ext).forEach((url) => useGLTF.preload(url));
-
-  Object.values(MODEL_URLS.roof).forEach((url) => useGLTF.preload(url));
-  Object.values(MODEL_URLS.bed).forEach((url) => useGLTF.preload(url));
-  useGLTF.preload(MODEL_URLS.kitchen);
-  useGLTF.preload(MODEL_URLS.cabinetDoor);
-  useGLTF.preload(MODEL_URLS.deck);
-  useGLTF.preload(MODEL_URLS.biggerDeck);
-  useGLTF.preload(MODEL_URLS.sofa);
-  Object.values(MODEL_URLS.countertop).forEach((url) => useGLTF.preload(url));
-}
 
 export default ModelViewer;

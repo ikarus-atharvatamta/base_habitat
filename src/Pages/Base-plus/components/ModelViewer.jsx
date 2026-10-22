@@ -420,6 +420,14 @@ const MODEL_URLS = {
     light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Light.glb`,
     dark: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Dark.glb`,
   },
+  base_ext_no_light: {
+    light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Light_no light.glb`,
+    dark: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Dark_no light.glb`,
+  },
+  base_int_no_light: {
+    light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Light_no light.glb`,
+    dark: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Base_1_Plus_Dark_no light.glb`,
+  },
   
   roof: {
     light: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Aluminuim Roof.glb`,
@@ -428,6 +436,10 @@ const MODEL_URLS = {
   bed: {
     Mezzanine_king: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Mezzanine King.glb`,
     Mezzanine_Bunk: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Mezzanine Bunk.glb`,
+  },
+  bed_no_light: {
+    Mezzanine_king: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Mezzanine King no light.glb`,
+    Mezzanine_Bunk: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Mezzanine Bunk no light.glb`,
   },
   kitchen: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Kitchen.glb`,
   cabinetDoor: `${import.meta.env.BASE_URL}plus/models/newmodels23april/Kitchen_Stripped_Cover.glb`,
@@ -459,14 +471,19 @@ const SceneContent = ({
 }) => {
   const { size, camera: threeCamera } = useThree();
 
+  const hasCustomLighting = config.customLighting !== false;
+  const baseExtSource = hasCustomLighting ? MODEL_URLS.base_ext : MODEL_URLS.base_ext_no_light;
+  const baseIntSource = hasCustomLighting ? MODEL_URLS.base_int : MODEL_URLS.base_int_no_light;
+  const bedSource = hasCustomLighting ? MODEL_URLS.bed : MODEL_URLS.bed_no_light;
+
   const baseUrl_ext =
-    MODEL_URLS.base_ext[config.sidingColor] || MODEL_URLS.base_ext.light;
+    baseExtSource[config.sidingColor] || baseExtSource.light;
   const baseUrl_int =
-    MODEL_URLS.base_int[config.sidingColor] || MODEL_URLS.base_int.light;
+    baseIntSource[config.sidingColor] || baseIntSource.light;
   const baseUrl = viewMode === "interior" ? baseUrl_int : baseUrl_ext;
   const roofUrl =
     MODEL_URLS.roof[config.roofColor] || MODEL_URLS.roof.light;
-  const bedUrl = MODEL_URLS.bed[config.selectedBed] || MODEL_URLS.bed.Mezzanine_king;
+  const bedUrl = bedSource[config.selectedBed] || bedSource.Mezzanine_king;
   const counterTopUrl = MODEL_URLS.countertop[config.selectedCounterTop] || MODEL_URLS.countertop.stainless_steel;
   const windowUrl = MODEL_URLS.window[config.windowMaterial] || MODEL_URLS.window["wood-pvc"];
 
@@ -664,7 +681,7 @@ const SceneContent = ({
       </group>
 
       <ContactShadows
-        key={`shadow-${viewMode}-${config.selectedBed}-${config.couchSelection}-${config.deckSelection}-${config.wardrobeSelection}`}
+        key={`shadow-${viewMode}-${config.selectedBed}-${config.couchSelection}-${config.deckSelection}-${config.wardrobeSelection}-${config.customLighting}`}
         position={[0, -modelHeight / 2 - 0.1, 0]}
         opacity={0.45}
         scale={60}
@@ -681,17 +698,11 @@ const SceneContent = ({
 };
 
 function CanvasContextDisposer({ modelUrls }) {
-  const { gl, scene } = useThree();
+  const { scene } = useThree();
   useEffect(() => {
     const doCleanup = () => {
       disposeSceneHierarchy(scene);
       clearModelCache(modelUrls);
-      try {
-        gl.renderLists?.dispose?.();
-        gl.dispose();
-      } catch (err) {
-        console.warn("WebGL dispose error:", err);
-      }
     };
 
     window.__CLEANUP_CURRENT_SCENE__ = doCleanup;
@@ -702,7 +713,7 @@ function CanvasContextDisposer({ modelUrls }) {
         delete window.__CLEANUP_CURRENT_SCENE__;
       }
     };
-  }, [gl, scene, modelUrls]);
+  }, [scene, modelUrls]);
   return null;
 }
 
@@ -743,14 +754,12 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
   }, []);
 
   const isMobile = useMemo(() => isMobileDevice(), []);
-  const [canRenderCanvas, setCanRenderCanvas] = useState(!isMobile);
+  const [canRenderCanvas, setCanRenderCanvas] = useState(false);
 
   useEffect(() => {
-    if (isMobile) {
-      const timer = setTimeout(() => setCanRenderCanvas(true), 120);
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile]);
+    const timer = setTimeout(() => setCanRenderCanvas(true), 150);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="relative w-full h-full">
@@ -831,21 +840,5 @@ const ModelViewer = ({ viewIndex = 0, viewMode = "exterior", config = {} }) => {
     </div>
   );
 };
-
-// Preload all models for instant switching ONLY on desktop to prevent mobile VRAM exhaustion and crashes
-if (!isMobileDevice()) {
-  Object.values(MODEL_URLS.base_ext).forEach((url) => useGLTF.preload(url));
-  Object.values(MODEL_URLS.base_int).forEach((url) => useGLTF.preload(url));
-  Object.values(MODEL_URLS.roof).forEach((url) => useGLTF.preload(url));
-  Object.values(MODEL_URLS.bed).forEach((url) => useGLTF.preload(url));
-  useGLTF.preload(MODEL_URLS.kitchen);
-  useGLTF.preload(MODEL_URLS.cabinetDoor);
-  useGLTF.preload(MODEL_URLS.deck);
-  useGLTF.preload(MODEL_URLS.biggerDeck);
-  useGLTF.preload(MODEL_URLS.sofa);
-  useGLTF.preload(MODEL_URLS.wardrobe);
-  Object.values(MODEL_URLS.countertop).forEach((url) => useGLTF.preload(url));
-  Object.values(MODEL_URLS.window).forEach((url) => useGLTF.preload(url));
-}
 
 export default ModelViewer;

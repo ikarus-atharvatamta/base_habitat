@@ -83,13 +83,6 @@ export const optimizeModelForMobile = (scene, isMobile, maxDim = 1024) => {
                         ctx.drawImage(img, 0, 0, targetW, targetH);
                         tex.image = canvas;
                         tex.needsUpdate = true;
-
-                        // Immediately free the original uncompressed ImageBitmap from GPU memory
-                        if (typeof img.close === "function") {
-                          try {
-                            img.close();
-                          } catch (e) {}
-                        }
                       }
                     } catch (err) {
                       console.warn("[MobileOptimization] Could not downscale texture:", err);
@@ -136,7 +129,6 @@ export const disposeSceneHierarchy = (scene) => {
             "emissiveMap",
             "bumpMap",
             "alphaMap",
-            "envMap",
           ].forEach((prop) => {
             if (mat[prop] && mat[prop].isTexture && mat[prop].dispose) {
               mat[prop].dispose();

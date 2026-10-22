@@ -478,7 +478,7 @@ const RightPanel = ({
             />
           )}
 
-          <button
+          {/* <button
             type="button"
             onClick={onDownloadScene}
             disabled={isExporting}
@@ -486,7 +486,7 @@ const RightPanel = ({
           >
             <Download size={18} className={isExporting ? "animate-bounce" : ""} />
             <span>{isExporting ? "Exporting 3D Scene..." : "Download Current Scene (.glb)"}</span>
-          </button>
+          </button> */}
 
           {activeLightControls && activeLightControls.length > 0 && (
             <div className="flex flex-col gap-4 mt-4 p-4 border rounded-xl border-black/5 bg-white/50">
@@ -659,7 +659,7 @@ const RightPanel = ({
               Need a break?
             </h4>
             <p className="text-sm text-subtext-gray leading-relaxed font-normal">
-              Save your configuration link or download your 3D model.
+              Save your configuration link and come back at any time.
             </p>
             <div className="flex flex-col gap-1.5 items-start">
               <a 
