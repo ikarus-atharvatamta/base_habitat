@@ -364,6 +364,25 @@ function Model({ url, visible = true, onLoaded, lightSettings, activeLightContro
   
   useEffect(() => {
     if (cloned) {
+      cloned.traverse((child) => {
+        if (child.isMesh && child.material) {
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach((mat) => {
+            if (mat.name === "Bigger Deck" || mat.name === "Deck2") {
+              if (mat.specularIntensity !== undefined) {
+                mat.specularIntensity = 1.0;
+              }
+              if (mat.roughness !== undefined && mat.roughness > 0.6) {
+                mat.roughness = 0.55;
+              }
+              if (mat.envMapIntensity !== undefined) {
+                mat.envMapIntensity = 1.5;
+              }
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
       optimizeModelForMobile(cloned, isMobile);
       if (onLoaded) onLoaded(cloned);
     }
