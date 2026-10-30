@@ -308,7 +308,11 @@ const RightPanel = ({
           <div className="grid grid-cols-2 gap-8 pt-1">
             {/* Stripped Down */}
             <div 
-              onClick={() => { onCabinetChange("stripped"); onViewModeChange?.("interior"); }}
+              onClick={() => { 
+                onCabinetChange("stripped"); 
+                onCounterTopChange("stainless_steel");
+                onViewModeChange?.("interior"); 
+              }}
               className="flex flex-col items-start gap-4 cursor-pointer select-none group"
             >
               <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
@@ -343,7 +347,11 @@ const RightPanel = ({
 
             {/* Classic */}
             <div 
-              onClick={() => { onCabinetChange("full"); onViewModeChange?.("interior"); }}
+              onClick={() => { 
+                onCabinetChange("full"); 
+                onCounterTopChange("wood_island");
+                onViewModeChange?.("interior"); 
+              }}
               className="flex flex-col items-start gap-4 cursor-pointer select-none group"
             >
               <div className="w-20 h-20 md:w-24 md:h-24 mx-auto flex items-center justify-center shrink-0">
