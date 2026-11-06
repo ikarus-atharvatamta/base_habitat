@@ -251,7 +251,7 @@ function AnimatedModel({ url, visible = true, onLoaded, lightSettings, activeLig
             defaultMultiplier = 0.05;
             defaultColor = "#965027";
           } else if (fileName === "Sofa.glb" && (child.name === "Spot002" || child.name === "Spot.002")) {
-            defaultMultiplier = 0.01;
+            defaultMultiplier = 0.008;
             defaultColor = "#965027";
           } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb" || fileName === "Black_Base_no light.glb" || fileName === "Light_Base_no Light.glb") {
             if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
@@ -416,7 +416,7 @@ function Model({ url, visible = true, onLoaded, lightSettings, activeLightContro
             defaultMultiplier = 0.05;
             defaultColor = "#965027";
           } else if (fileName === "Sofa.glb" && (child.name === "Spot002" || child.name === "Spot.002")) {
-            defaultMultiplier = 0.01;
+            defaultMultiplier = 0.008;
             defaultColor = "#965027";
           } else if (fileName === "Black_Base.glb" || fileName === "Light_Base.glb" || fileName === "Black_Base_no light.glb" || fileName === "Light_Base_no Light.glb") {
             if (["Point", "Point001", "Point002", "Point007"].includes(child.name)) {
